@@ -61,6 +61,7 @@ export default function SimulatorPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [mode, setMode] = useState<InteractionMode>('addAgent');
+  const [toast, setToast] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState(initialPreset.id);
   const [overlays, setOverlays] = useState<Set<VisualizationOverlay>>(new Set());
   const [panicMode, setPanicMode] = useState(false);
@@ -264,7 +265,13 @@ export default function SimulatorPage() {
 
     saveCustomScenario(scenario);
     setActivePreset(id);
+    showToast(`Layout saved as "${name}"`);
   }, [controller]);
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
   const shortcutHandlers = useMemo(() => ({
     togglePlay,
@@ -352,6 +359,19 @@ export default function SimulatorPage() {
           onSaveLayout={handleSaveLayout}
         />
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4">
+          <div className="glass-strong rounded-xl px-5 py-3 border border-emerald-500/20 flex items-center gap-3">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-emerald-400 flex-shrink-0">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="text-sm text-white/70">{toast}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
