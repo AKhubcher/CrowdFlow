@@ -132,6 +132,8 @@ export default function SimulatorPage() {
   const stressSamples = useRef(0);
   const fpsSum = useRef(0);
   const fpsSamples = useRef(0);
+  const latestStats = useRef(stats);
+  latestStats.current = stats;
 
   const saveCurrentSession = useCallback(() => {
     if (!controller || sessionStart.current === 0) return;
@@ -167,14 +169,15 @@ export default function SimulatorPage() {
   useEffect(() => {
     if (!isPlaying) return;
     const interval = setInterval(() => {
-      if (stats.averageStress > peakStress.current) peakStress.current = stats.averageStress;
-      stressSum.current += stats.averageStress;
+      const s = latestStats.current;
+      if (s.averageStress > peakStress.current) peakStress.current = s.averageStress;
+      stressSum.current += s.averageStress;
       stressSamples.current++;
-      fpsSum.current += stats.fps;
+      fpsSum.current += s.fps;
       fpsSamples.current++;
     }, 500);
     return () => clearInterval(interval);
-  }, [isPlaying, stats]);
+  }, [isPlaying]);
 
   // Snapshot capture interval
   useEffect(() => {
