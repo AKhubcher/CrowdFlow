@@ -37,10 +37,9 @@ export function CanvasContainer({ controller, className = '' }: CanvasContainerP
   useEffect(() => {
     if (size.width > 0 && size.height > 0 && attached) {
       controller.renderer.resize(size.width, size.height);
-      // Only center camera on first meaningful resize
+      // Auto-fit world to canvas on first resize
       if (!centeredOnce.current) {
-        const world = controller.getWorld();
-        controller.renderer.camera.setPosition(world.width / 2, world.height / 2);
+        controller.fitCameraToWorld();
         centeredOnce.current = true;
       }
       // Force a render so the user sees the initial state immediately

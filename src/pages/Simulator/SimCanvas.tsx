@@ -23,7 +23,6 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     return controller.renderer.camera.screenToWorld(sx, sy, rect.width, rect.height);
   }, [controller]);
 
-  // eraseAt must be defined BEFORE it's used in onMouseDown
   const eraseAt = useCallback((x: number, y: number) => {
     const world = controller.getWorld();
     const eraseRadius = 20;
@@ -40,7 +39,6 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     // Remove walls near cursor
     for (let i = world.walls.length - 1; i >= 0; i--) {
       const w = world.walls[i];
-      // Inline distance from point to wall segment
       const wdx = w.bx - w.ax;
       const wdy = w.by - w.ay;
       const lenSq = wdx * wdx + wdy * wdy;
@@ -100,6 +98,8 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       controller.renderer.environmentLayer.forceRedraw();
       controller.engine.flowField.markDirty();
     }
+    // Always render so erased items disappear immediately
+    controller.renderOnce();
   }, [controller]);
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
@@ -118,15 +118,17 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     dragStart.current = worldPos;
 
     if (mode === 'addAgent') {
-      const world = controller.getWorld();
-      world.agents.push(createAgent(worldPos.x, worldPos.y));
+      controller.getWorld().agents.push(createAgent(worldPos.x, worldPos.y));
+      controller.renderOnce();
     } else if (mode === 'addHazard') {
       addHazard(controller.getWorld(), worldPos.x, worldPos.y, 40, 1);
       controller.renderer.environmentLayer.forceRedraw();
       controller.engine.flowField.markDirty();
+      controller.renderOnce();
     } else if (mode === 'addAttractor') {
       addAttractor(controller.getWorld(), worldPos.x, worldPos.y, 60, 1);
       controller.renderer.environmentLayer.forceRedraw();
+      controller.renderOnce();
     } else if (mode === 'erase') {
       eraseAt(worldPos.x, worldPos.y);
     }
@@ -141,6 +143,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       controller.renderer.camera.pan(-dx, -dy);
       lastScreenPos.current = { x: e.clientX, y: e.clientY };
       controller.renderer.environmentLayer.forceRedraw();
+      controller.renderOnce();
       return;
     }
 
@@ -153,15 +156,21 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
           ax: dragStart.current.x, ay: dragStart.current.y,
           bx: worldPos.x, by: worldPos.y,
         });
+        controller.renderOnce();
       } else if (mode === 'addAgent') {
         if (Math.random() < 0.3) {
           controller.getWorld().agents.push(createAgent(worldPos.x, worldPos.y));
         }
+        controller.renderOnce();
       } else if (mode === 'erase') {
         eraseAt(worldPos.x, worldPos.y);
       } else if (mode === 'select') {
         controller.renderer.overlayLayer.setSelection(dragStart.current, worldPos);
+        controller.renderOnce();
       }
+    } else {
+      // Render cursor overlay even when not dragging
+      controller.renderOnce();
     }
   }, [controller, mode, getWorldPos, eraseAt]);
 
@@ -191,6 +200,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       controller.renderer.environmentLayer.forceRedraw();
       controller.engine.flowField.markDirty();
     }
+    controller.renderOnce();
   }, [controller, mode, getWorldPos]);
 
   const onWheel = useCallback((e: React.WheelEvent) => {
@@ -201,6 +211,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     const factor = e.deltaY < 0 ? 1.1 : 0.9;
     controller.renderer.camera.zoomAt(factor, sx, sy, rect.width, rect.height);
     controller.renderer.environmentLayer.forceRedraw();
+    controller.renderOnce();
   }, [controller]);
 
   return (

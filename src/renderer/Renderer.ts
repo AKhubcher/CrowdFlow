@@ -33,6 +33,9 @@ export class Renderer {
     this.contexts = canvases.map(c => c.getContext('2d')!);
   }
 
+  getWidth(): number { return this.width; }
+  getHeight(): number { return this.height; }
+
   resize(w: number, h: number): void {
     this.width = w;
     this.height = h;

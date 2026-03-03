@@ -97,10 +97,26 @@ export class SimulationController {
     this.stop();
     this.engine = new Engine(world ?? createWorld());
     this.accumulator = 0;
-    // Re-center camera on new world
-    this.renderer.camera.setPosition(this.engine.world.width / 2, this.engine.world.height / 2);
-    this.renderer.camera.setZoom(1);
+    this.fitCameraToWorld();
     this.renderer.environmentLayer.forceRedraw();
+    this.renderer.render(this.engine.world, this.engine.flowField);
+  }
+
+  /** Fit the camera so the entire world is visible within the canvas */
+  fitCameraToWorld(): void {
+    const w = this.renderer.getWidth();
+    const h = this.renderer.getHeight();
+    if (w === 0 || h === 0) return;
+    const world = this.engine.world;
+    const zoomX = w / world.width;
+    const zoomY = h / world.height;
+    const zoom = Math.min(zoomX, zoomY) * 0.95; // 5% margin
+    this.renderer.camera.setPosition(world.width / 2, world.height / 2);
+    this.renderer.camera.setZoom(zoom);
+  }
+
+  /** Render a single frame without stepping physics — used for tool feedback when paused */
+  renderOnce(): void {
     this.renderer.render(this.engine.world, this.engine.flowField);
   }
 
