@@ -147,9 +147,9 @@ export function SteeringDemo() {
   }, [activeBehavior]);
 
   return (
-    <div className="glass rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-accent-cyan mb-4">Steering Behaviors</h3>
-      <div className="flex flex-wrap gap-2 mb-4">
+    <div className="glass rounded-xl p-6 max-w-[560px] mx-auto">
+      <h3 className="text-lg font-semibold text-accent-cyan mb-4 text-center">Steering Behaviors</h3>
+      <div className="flex flex-wrap justify-center gap-2 mb-4">
         {Object.keys(behaviorDescriptions).map(key => (
           <button
             key={key}
@@ -164,8 +164,8 @@ export function SteeringDemo() {
           </button>
         ))}
       </div>
-      <p className="text-sm text-white/40 mb-4">{behaviorDescriptions[activeBehavior]}</p>
-      <canvas ref={canvasRef} className="rounded-lg bg-surface-950 w-full" />
+      <p className="text-sm text-white/40 mb-4 text-center">{behaviorDescriptions[activeBehavior]}</p>
+      <canvas ref={canvasRef} className="rounded-lg bg-surface-950 block mx-auto" />
     </div>
   );
 }
