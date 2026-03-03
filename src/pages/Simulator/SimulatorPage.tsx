@@ -324,6 +324,11 @@ export default function SimulatorPage() {
     showToast(`Layout saved as "${name}"`);
   }, [controller]);
 
+  const handleWorldResize = useCallback((width: number, height: number) => {
+    if (!controller) return;
+    controller.resizeWorld(width, height);
+  }, [controller]);
+
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -387,13 +392,11 @@ export default function SimulatorPage() {
         <div className="flex-1 relative">
           <SimCanvas controller={controller} mode={mode} />
           {/* Mode indicator */}
-          {mode && (
           <div className="absolute bottom-3 left-3 bg-surface-950/60 backdrop-blur-xl rounded-lg px-3 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[10px] uppercase tracking-widest text-white/25 font-medium">
-              {modeLabels[mode]}
+              {mode ? modeLabels[mode] : 'Move'}
             </span>
           </div>
-          )}
           {/* Keyboard hints */}
           <div className="absolute bottom-3 right-3 bg-surface-950/40 backdrop-blur-xl rounded-lg px-2.5 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[9px] text-white/15 font-mono">
@@ -420,6 +423,8 @@ export default function SimulatorPage() {
           stats={stats}
           snapshotCount={snapshotCount}
           snapshotIndex={snapshotIndex}
+          worldWidth={controller.getWorld().width}
+          worldHeight={controller.getWorld().height}
           onTogglePlay={togglePlay}
           onStepForward={stepForward}
           onReset={handleReset}
@@ -432,6 +437,7 @@ export default function SimulatorPage() {
           onClearAgents={handleClearAgents}
           onScrubTimeline={handleScrubTimeline}
           onSaveLayout={handleSaveLayout}
+          onWorldResize={handleWorldResize}
         />
       </div>
 

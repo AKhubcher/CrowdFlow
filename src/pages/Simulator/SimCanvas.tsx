@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { CanvasContainer } from '../../components/canvas/CanvasContainer';
 import type { SimulationController } from '../../bridge/SimulationController';
-import type { InteractionMode } from '../../engine/core/types';
+import type { InteractionMode, AgentData, ExitData } from '../../engine/core/types';
 import type { SelectionSet } from '../../renderer/layers/OverlayLayer';
 import { createAgent } from '../../engine/core/Agent';
 import { addWall, addExit, addHazard, addAttractor } from '../../engine/core/World';
@@ -15,6 +15,12 @@ interface ClipboardData {
   centerX: number;
   centerY: number;
 }
+
+type DragTarget =
+  | { type: 'agent'; agent: AgentData }
+  | { type: 'exitA'; exit: ExitData }
+  | { type: 'exitB'; exit: ExitData }
+  | null;
 
 interface SimCanvasProps {
   controller: SimulationController;
@@ -30,6 +36,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
   const clipboard = useRef<ClipboardData | null>(null);
   const lastCursorWorld = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const dragTarget = useRef<DragTarget>(null);
 
   const clearSelection = useCallback(() => {
     selection.current = null;
@@ -42,6 +49,46 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
     return controller.renderer.camera.screenToWorld(sx, sy, rect.width, rect.height);
+  }, [controller]);
+
+  // Find nearest agent or exit endpoint to click position
+  const findDragTarget = useCallback((x: number, y: number): DragTarget => {
+    const world = controller.getWorld();
+    const grabRadius = 15;
+    const grabRadiusSq = grabRadius * grabRadius;
+    let bestDist = grabRadiusSq;
+    let target: DragTarget = null;
+
+    // Check agents
+    for (const a of world.agents) {
+      const dx = a.position.x - x;
+      const dy = a.position.y - y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < bestDist) {
+        bestDist = distSq;
+        target = { type: 'agent', agent: a };
+      }
+    }
+
+    // Check exit endpoints (each exit has two draggable endpoints)
+    for (const ex of world.exits) {
+      const dxA = ex.ax - x;
+      const dyA = ex.ay - y;
+      const distSqA = dxA * dxA + dyA * dyA;
+      if (distSqA < bestDist) {
+        bestDist = distSqA;
+        target = { type: 'exitA', exit: ex };
+      }
+      const dxB = ex.bx - x;
+      const dyB = ex.by - y;
+      const distSqB = dxB * dxB + dyB * dyB;
+      if (distSqB < bestDist) {
+        bestDist = distSqB;
+        target = { type: 'exitB', exit: ex };
+      }
+    }
+
+    return target;
   }, [controller]);
 
   const computeSelection = useCallback((start: { x: number; y: number }, end: { x: number; y: number }) => {
@@ -142,7 +189,6 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       .filter(a => sel.attractorIds.has(a.id))
       .map(a => ({ x: a.x, y: a.y, radius: a.radius, strength: a.strength }));
 
-    // Compute center of selection for offset calculation on paste
     let sumX = 0, sumY = 0, count = 0;
     for (const a of agents) { sumX += a.x; sumY += a.y; count++; }
     for (const w of walls) { sumX += (w.ax + w.bx) / 2; sumY += (w.ay + w.by) / 2; count++; }
@@ -292,14 +338,29 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     const worldPos = getWorldPos(e);
 
-    // Middle mouse, right-click, or no tool: pan
-    if (e.button === 1 || e.button === 2 || (e.button === 0 && mode === null)) {
+    // Middle mouse or right-click: always pan
+    if (e.button === 1 || e.button === 2) {
       isPanning.current = true;
       lastScreenPos.current = { x: e.clientX, y: e.clientY };
       return;
     }
 
     if (e.button !== 0) return;
+
+    // Null mode: try to grab an agent or exit, else pan
+    if (mode === null) {
+      const target = findDragTarget(worldPos.x, worldPos.y);
+      if (target) {
+        dragTarget.current = target;
+        dragging.current = true;
+        dragStart.current = worldPos;
+        return;
+      }
+      // Nothing to grab — pan instead
+      isPanning.current = true;
+      lastScreenPos.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
 
     dragging.current = true;
     dragStart.current = worldPos;
@@ -319,10 +380,9 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     } else if (mode === 'erase') {
       eraseAt(worldPos.x, worldPos.y);
     } else if (mode === 'select') {
-      // Clear previous selection on new drag start
       clearSelection();
     }
-  }, [controller, mode, getWorldPos, eraseAt, clearSelection]);
+  }, [controller, mode, getWorldPos, eraseAt, clearSelection, findDragTarget]);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
     const worldPos = getWorldPos(e);
@@ -334,6 +394,29 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       controller.renderer.camera.pan(-dx, -dy);
       lastScreenPos.current = { x: e.clientX, y: e.clientY };
       controller.renderer.environmentLayer.forceRedraw();
+      controller.renderOnce();
+      return;
+    }
+
+    // Dragging an agent or exit endpoint in null mode
+    if (dragging.current && dragTarget.current) {
+      const t = dragTarget.current;
+      if (t.type === 'agent') {
+        t.agent.position.x = worldPos.x;
+        t.agent.position.y = worldPos.y;
+        t.agent.velocity.x = 0;
+        t.agent.velocity.y = 0;
+      } else if (t.type === 'exitA') {
+        t.exit.ax = worldPos.x;
+        t.exit.ay = worldPos.y;
+        controller.renderer.environmentLayer.forceRedraw();
+        controller.engine.flowField.markDirty();
+      } else if (t.type === 'exitB') {
+        t.exit.bx = worldPos.x;
+        t.exit.by = worldPos.y;
+        controller.renderer.environmentLayer.forceRedraw();
+        controller.engine.flowField.markDirty();
+      }
       controller.renderOnce();
       return;
     }
@@ -370,6 +453,13 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       return;
     }
 
+    // Release drag target
+    if (dragTarget.current) {
+      dragTarget.current = null;
+      dragging.current = false;
+      return;
+    }
+
     if (!dragging.current) return;
     dragging.current = false;
 
@@ -390,7 +480,6 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       controller.renderer.environmentLayer.forceRedraw();
       controller.engine.flowField.markDirty();
     } else if (mode === 'select' && dragLen > 5) {
-      // Compute selection from drag box
       const sel = computeSelection(dragStart.current, worldPos);
       selection.current = sel;
       controller.renderer.overlayLayer.setSelected(sel);
@@ -409,14 +498,20 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     controller.renderOnce();
   }, [controller]);
 
+  // Change cursor based on hover target in null mode
+  const getCursorClass = useCallback(() => {
+    if (mode) return 'cursor-crosshair';
+    return 'cursor-grab';
+  }, [mode]);
+
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 ${mode ? 'cursor-crosshair' : 'cursor-default'}`}
+      className={`absolute inset-0 ${getCursorClass()}`}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
-      onMouseLeave={() => { dragging.current = false; isPanning.current = false; }}
+      onMouseLeave={() => { dragging.current = false; isPanning.current = false; dragTarget.current = null; }}
       onWheel={onWheel}
       onContextMenu={e => e.preventDefault()}
     >

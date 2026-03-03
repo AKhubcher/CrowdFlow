@@ -120,6 +120,13 @@ export class SimulationController {
     this.renderer.render(this.engine.world, this.engine.flowField);
   }
 
+  resizeWorld(width: number, height: number): void {
+    this.engine.resizeWorld(width, height);
+    this.fitCameraToWorld();
+    this.renderer.environmentLayer.forceRedraw();
+    this.renderOnce();
+  }
+
   getWorld(): WorldState {
     return this.engine.world;
   }

@@ -224,6 +224,19 @@ export class Engine {
     };
   }
 
+  /** Clamp all agents inside the current world bounds */
+  containAll(): void {
+    this.containAgents();
+  }
+
+  /** Resize the world and rebuild the flow field */
+  resizeWorld(width: number, height: number): void {
+    this.world.width = width;
+    this.world.height = height;
+    this.flowField = new FlowField(width, height);
+    this.containAgents();
+  }
+
   resetExitedCount(): void {
     this.totalExited = 0;
     for (const exit of this.world.exits) {
