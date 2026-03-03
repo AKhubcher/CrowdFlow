@@ -51,13 +51,14 @@ export function HeroSection() {
     const engine = new Engine(world);
     const ctx = canvas.getContext('2d')!;
 
-    // Track mouse for interactive repulsion
+    // Track mouse for interactive repulsion — listen on parent to catch events above overlays
+    const section = canvas.closest('section')!;
     const onMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       mouseRef.current.x = e.clientX - rect.left;
       mouseRef.current.y = e.clientY - rect.top;
     };
-    canvas.addEventListener('mousemove', onMouseMove);
+    section.addEventListener('mousemove', onMouseMove);
 
     let rafId: number;
     let frame = 0;
@@ -146,7 +147,7 @@ export function HeroSection() {
     rafId = requestAnimationFrame(render);
     return () => {
       cancelAnimationFrame(rafId);
-      canvas.removeEventListener('mousemove', onMouseMove);
+      section.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('resize', resize);
     };
   }, []);

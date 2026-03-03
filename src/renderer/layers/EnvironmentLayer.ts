@@ -4,7 +4,6 @@ import { Camera } from '../camera/Camera';
 
 export class EnvironmentLayer {
   private dirty = true;
-  private animFrame = 0;
 
   markDirty(): void {
     this.dirty = true;
@@ -13,9 +12,9 @@ export class EnvironmentLayer {
   render(ctx: CanvasRenderingContext2D, world: WorldState, camera: Camera, w: number, h: number): void {
     if (!this.dirty) return;
     this.dirty = false;
-    this.animFrame++;
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const dpr = camera.dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
     camera.apply(ctx, w, h);
 
@@ -107,7 +106,7 @@ export class EnvironmentLayer {
       ctx.arc(a.x, a.y, a.radius * 1.2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Concentric rings (static)
+      // Concentric rings
       ctx.strokeStyle = ATTRACTOR_COLOR;
       ctx.lineWidth = 1;
       for (let ring = 1; ring <= 3; ring++) {
@@ -193,7 +192,6 @@ export class EnvironmentLayer {
         ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
         ctx.lineWidth = 1.5;
         const arrowLen = 12;
-        // Draw small chevrons pointing outward
         for (let offset = -0.25; offset <= 0.25; offset += 0.25) {
           const ox = mx + dx * offset;
           const oy = my + dy * offset;

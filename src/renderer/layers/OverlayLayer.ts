@@ -24,7 +24,8 @@ export class OverlayLayer {
     if (!this.dirty) return;
     this.dirty = false;
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const dpr = camera.dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
     camera.apply(ctx, w, h);
 
@@ -35,10 +36,8 @@ export class OverlayLayer {
       const sw = Math.abs(this.selectionEnd.x - this.selectionStart.x);
       const sh = Math.abs(this.selectionEnd.y - this.selectionStart.y);
 
-      // Fill
       ctx.fillStyle = 'rgba(6, 182, 212, 0.06)';
       ctx.fillRect(sx, sy, sw, sh);
-      // Border
       ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
       ctx.lineWidth = 1;
       ctx.setLineDash([6, 3]);
@@ -48,7 +47,6 @@ export class OverlayLayer {
       const markLen = Math.min(8, sw / 4, sh / 4);
       ctx.strokeStyle = 'rgba(6, 182, 212, 0.7)';
       ctx.lineWidth = 2;
-      ctx.setLineDash([]);
       const markCorners = [
         [sx, sy, 1, 1], [sx + sw, sy, -1, 1],
         [sx, sy + sh, 1, -1], [sx + sw, sy + sh, -1, -1],
@@ -67,20 +65,17 @@ export class OverlayLayer {
       const { x, y } = this.cursorPos;
 
       if (this.cursorMode === 'addAgent') {
-        // Agent placement — pulsing circle
         ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
         ctx.stroke();
-        // Outer ring
         ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(x, y, 12, 0, Math.PI * 2);
         ctx.stroke();
       } else if (this.cursorMode === 'addWall' || this.cursorMode === 'addExit') {
-        // Wall/exit — crosshair with dot
         ctx.fillStyle = this.cursorMode === 'addWall'
           ? 'rgba(148, 163, 184, 0.6)' : 'rgba(16, 185, 129, 0.6)';
         ctx.beginPath();
@@ -96,7 +91,6 @@ export class OverlayLayer {
         ctx.moveTo(x, y + 4); ctx.lineTo(x, y + 12);
         ctx.stroke();
       } else if (this.cursorMode === 'addHazard') {
-        // Hazard — danger circle
         ctx.strokeStyle = 'rgba(239, 68, 68, 0.35)';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 4]);
@@ -104,13 +98,11 @@ export class OverlayLayer {
         ctx.arc(x, y, 40, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
-        // Inner dot
         ctx.fillStyle = 'rgba(239, 68, 68, 0.5)';
         ctx.beginPath();
         ctx.arc(x, y, 3, 0, Math.PI * 2);
         ctx.fill();
       } else if (this.cursorMode === 'addAttractor') {
-        // Attractor — magnetic rings
         ctx.strokeStyle = 'rgba(139, 92, 246, 0.3)';
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
@@ -127,13 +119,11 @@ export class OverlayLayer {
         ctx.arc(x, y, 3, 0, Math.PI * 2);
         ctx.fill();
       } else if (this.cursorMode === 'erase') {
-        // Erase — red circle with X
         ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(x, y, 20, 0, Math.PI * 2);
         ctx.stroke();
-        // X inside
         ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -141,7 +131,6 @@ export class OverlayLayer {
         ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5);
         ctx.stroke();
       } else {
-        // Select — minimal crosshair
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.lineWidth = 1;
         ctx.beginPath();

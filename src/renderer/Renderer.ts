@@ -37,13 +37,13 @@ export class Renderer {
     this.width = w;
     this.height = h;
     const dpr = window.devicePixelRatio || 1;
+    this.camera.dpr = dpr;
     for (const canvas of this.canvases) {
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
-      const ctx = canvas.getContext('2d')!;
-      ctx.scale(dpr, dpr);
+      // DPR scaling is applied per-frame via camera.dpr — no ctx.scale here
     }
     this.environmentLayer.forceRedraw();
     this.overlayLayer.forceRedraw();
@@ -59,6 +59,7 @@ export class Renderer {
     this.frameCount++;
 
     const [bgCtx, heatCtx, agentCtx, uiCtx] = this.contexts;
+    const dpr = this.camera.dpr;
 
     // Layer 0: Environment (only on dirty)
     this.environmentLayer.render(bgCtx, world, this.camera, w, h);
@@ -67,7 +68,7 @@ export class Renderer {
     if (this.frameCount % HEATMAP_UPDATE_INTERVAL === 0) {
       this.heatmap.update(world);
     }
-    heatCtx.setTransform(1, 0, 0, 1, 0, 0);
+    heatCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     heatCtx.clearRect(0, 0, w, h);
     this.heatmap.render(heatCtx, this.camera, w, h);
     this.flowFieldLayer.render(heatCtx, flowField, this.camera, w, h);

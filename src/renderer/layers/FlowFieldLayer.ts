@@ -11,7 +11,6 @@ export class FlowFieldLayer {
   render(ctx: CanvasRenderingContext2D, flowField: FlowField, camera: Camera, w: number, h: number): void {
     if (!this.enabled) return;
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
     camera.apply(ctx, w, h);
 
     const cols = flowField.getCols();

@@ -2,6 +2,7 @@ export class Camera {
   x = 0;
   y = 0;
   zoom = 1;
+  dpr = 1;
   private targetX = 0;
   private targetY = 0;
   private targetZoom = 1;
@@ -41,7 +42,8 @@ export class Camera {
   }
 
   apply(ctx: CanvasRenderingContext2D, canvasW: number, canvasH: number): void {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const d = this.dpr;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
     ctx.translate(canvasW / 2, canvasH / 2);
     ctx.scale(this.zoom, this.zoom);
     ctx.translate(-this.x, -this.y);

@@ -10,7 +10,8 @@ export class AgentLayer {
   }
 
   render(ctx: CanvasRenderingContext2D, world: WorldState, camera: Camera, w: number, h: number): void {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const dpr = camera.dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
     camera.apply(ctx, w, h);
 

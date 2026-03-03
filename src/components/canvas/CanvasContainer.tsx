@@ -11,11 +11,11 @@ export function CanvasContainer({ controller, className = '' }: CanvasContainerP
   const [containerRef, size] = useResizeObserver<HTMLDivElement>();
   const canvasRefs = useRef<(HTMLCanvasElement | null)[]>([null, null, null, null]);
   const [attached, setAttached] = useState(false);
+  const centeredOnce = useRef(false);
 
   // Re-check attachment whenever a canvas ref is set
   const setCanvasRef = useCallback((index: number, el: HTMLCanvasElement | null) => {
     canvasRefs.current[index] = el;
-    // Try to attach once all 4 are ready
     const canvases = canvasRefs.current.filter((c): c is HTMLCanvasElement => c !== null);
     if (canvases.length === 4 && !attached) {
       controller.renderer.attach(canvases);
@@ -26,6 +26,7 @@ export function CanvasContainer({ controller, className = '' }: CanvasContainerP
   // Re-attach if controller changes
   useEffect(() => {
     setAttached(false);
+    centeredOnce.current = false;
     const canvases = canvasRefs.current.filter((c): c is HTMLCanvasElement => c !== null);
     if (canvases.length === 4) {
       controller.renderer.attach(canvases);
@@ -36,8 +37,15 @@ export function CanvasContainer({ controller, className = '' }: CanvasContainerP
   useEffect(() => {
     if (size.width > 0 && size.height > 0 && attached) {
       controller.renderer.resize(size.width, size.height);
-      const world = controller.getWorld();
-      controller.renderer.camera.setPosition(world.width / 2, world.height / 2);
+      // Only center camera on first meaningful resize
+      if (!centeredOnce.current) {
+        const world = controller.getWorld();
+        controller.renderer.camera.setPosition(world.width / 2, world.height / 2);
+        centeredOnce.current = true;
+      }
+      // Force a render so the user sees the initial state immediately
+      controller.renderer.environmentLayer.forceRedraw();
+      controller.renderer.render(controller.engine.world, controller.engine.flowField);
     }
   }, [controller, size, attached]);
 

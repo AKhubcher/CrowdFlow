@@ -11,7 +11,6 @@ export class GridLayer {
   render(ctx: CanvasRenderingContext2D, worldW: number, worldH: number, camera: Camera, w: number, h: number): void {
     if (!this.enabled) return;
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
     camera.apply(ctx, w, h);
 
     ctx.strokeStyle = 'rgba(99, 102, 241, 0.08)';
