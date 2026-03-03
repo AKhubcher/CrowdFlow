@@ -77,6 +77,7 @@ export function UseCasesSection() {
               <p className="text-sm text-white/30 leading-relaxed mb-5">{uc.description}</p>
               <Link
                 to="/simulator"
+                state={{ presetId: uc.scenario }}
                 className="inline-flex items-center gap-2 text-xs text-white/30 hover:text-white/60 transition-colors"
               >
                 Try this scenario
