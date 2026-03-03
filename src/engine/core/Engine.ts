@@ -2,18 +2,20 @@ import { AgentData, AgentState, WorldState, SimulationStats } from './types';
 import {
   STRESS_INCREASE_DENSITY, STRESS_INCREASE_HAZARD, STRESS_INCREASE_PANIC,
   STRESS_DECREASE_OPEN, STRESS_DECREASE_PROGRESS, STRESS_FREEZE_THRESHOLD,
-  SEPARATION_RADIUS, AGENT_COLOR_CALM, AGENT_COLOR_STRESSED, AGENT_COLOR_PANIC,
+  SEPARATION_RADIUS,
 } from './constants';
 import { Vec2 } from '../math/Vec2';
-import { clamp, lerp } from '../math/math-utils';
+import { clamp } from '../math/math-utils';
 import { SpatialHashGrid } from '../spatial/SpatialHashGrid';
 import { SteeringManager } from '../steering/SteeringManager';
 import { resolveAgentCollisions } from '../collision/agentCollision';
 import { resolveWallCollisions } from '../collision/wallCollision';
 import { FlowField } from '../pathfinding/FlowField';
 import { assignExits } from '../pathfinding/ExitSelector';
+import { LineSegment } from '../math/LineSegment';
 
 const _steerForce = { x: 0, y: 0 };
+const _closest = { x: 0, y: 0 };
 
 export class Engine {
   world: WorldState;
@@ -29,7 +31,7 @@ export class Engine {
     this.flowField = new FlowField(world.width, world.height);
   }
 
-  step(dt: number): void {
+  step(_dt: number): void {
     const { world, grid, steering, flowField } = this;
 
     // Recompute flow field if dirty
@@ -45,8 +47,6 @@ export class Engine {
     for (let i = 0; i < world.agents.length; i++) {
       const agent = world.agents[i];
 
-      if (agent.state === AgentState.Exiting) continue;
-
       // Check freeze from stress
       if (agent.stress > STRESS_FREEZE_THRESHOLD && Math.random() < 0.02) {
         agent.state = AgentState.Frozen;
@@ -56,6 +56,11 @@ export class Engine {
         if (Math.random() < 0.01) {
           agent.state = AgentState.Moving;
         }
+        // Apply friction while frozen
+        agent.velocity.x *= 0.9;
+        agent.velocity.y *= 0.9;
+        this.updateStress(agent);
+        agent.color = this.stressColor(agent.stress);
         continue;
       }
 
@@ -66,8 +71,9 @@ export class Engine {
       agent.velocity.x += _steerForce.x / agent.mass;
       agent.velocity.y += _steerForce.y / agent.mass;
 
-      // Clamp velocity
-      Vec2.clampLength(agent.velocity, agent.velocity, agent.maxSpeed);
+      // Clamp velocity — panic mode allows faster movement
+      const maxSpd = world.panicMode ? agent.maxSpeed * 1.4 : agent.maxSpeed;
+      Vec2.clampLength(agent.velocity, agent.velocity, maxSpd);
 
       // Integrate position
       agent.position.x += agent.velocity.x;
@@ -80,7 +86,7 @@ export class Engine {
       // Update stress
       this.updateStress(agent);
 
-      // Update color based on stress
+      // Update color — smooth gradient instead of hard thresholds
       agent.color = this.stressColor(agent.stress);
     }
 
@@ -136,9 +142,26 @@ export class Engine {
   }
 
   private stressColor(stress: number): string {
-    if (stress < 0.3) return AGENT_COLOR_CALM;
-    if (stress < 0.7) return AGENT_COLOR_STRESSED;
-    return AGENT_COLOR_PANIC;
+    // Smooth color gradient: cyan(0) -> yellow(0.4) -> orange(0.7) -> red(1.0)
+    if (stress < 0.4) {
+      const t = stress / 0.4;
+      const r = Math.round(6 + (234 - 6) * t);
+      const g = Math.round(182 + (179 - 182) * t);
+      const b = Math.round(212 + (8 - 212) * t);
+      return `rgb(${r},${g},${b})`;
+    }
+    if (stress < 0.7) {
+      const t = (stress - 0.4) / 0.3;
+      const r = Math.round(234 + (249 - 234) * t);
+      const g = Math.round(179 + (115 - 179) * t);
+      const b = Math.round(8 + (22 - 8) * t);
+      return `rgb(${r},${g},${b})`;
+    }
+    const t = (stress - 0.7) / 0.3;
+    const r = Math.round(249 + (239 - 249) * t);
+    const g = Math.round(115 + (68 - 115) * t);
+    const b = Math.round(22 + (68 - 22) * t);
+    return `rgb(${r},${g},${b})`;
   }
 
   private containAgents(): void {
@@ -159,12 +182,18 @@ export class Engine {
     for (let i = agents.length - 1; i >= 0; i--) {
       const agent = agents[i];
       for (const exit of exits) {
-        const mx = (exit.ax + exit.bx) * 0.5;
-        const my = (exit.ay + exit.by) * 0.5;
-        const dx = agent.position.x - mx;
-        const dy = agent.position.y - my;
-        const exitRadius = exit.width * 0.5 + agent.radius;
-        if (dx * dx + dy * dy < exitRadius * exitRadius) {
+        // Use distance to exit line segment, not just midpoint
+        LineSegment.closestPoint(
+          _closest,
+          exit.ax, exit.ay, exit.bx, exit.by,
+          agent.position.x, agent.position.y,
+        );
+        const dx = agent.position.x - _closest.x;
+        const dy = agent.position.y - _closest.y;
+        const distSq = dx * dx + dy * dy;
+        const threshold = agent.radius + 8; // close enough to exit line
+
+        if (distSq < threshold * threshold) {
           exit.agentsExited++;
           this.totalExited++;
           agents.splice(i, 1);
@@ -190,7 +219,7 @@ export class Engine {
       exitedCount: this.totalExited,
       averageSpeed: count > 0 ? totalSpeed / count : 0,
       averageStress: count > 0 ? totalStress / count : 0,
-      fps: 0, // filled in by controller
+      fps: 0,
       tick: this.world.tick,
     };
   }

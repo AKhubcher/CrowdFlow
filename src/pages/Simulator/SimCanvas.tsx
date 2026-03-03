@@ -1,9 +1,9 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback } from 'react';
 import { CanvasContainer } from '../../components/canvas/CanvasContainer';
 import type { SimulationController } from '../../bridge/SimulationController';
 import type { InteractionMode } from '../../engine/core/types';
 import { createAgent } from '../../engine/core/Agent';
-import { addWall, addExit, addHazard, addAttractor, removeEntity } from '../../engine/core/World';
+import { addWall, addExit, addHazard, addAttractor } from '../../engine/core/World';
 
 interface SimCanvasProps {
   controller: SimulationController;
@@ -14,6 +14,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const isPanning = useRef(false);
+  const lastScreenPos = useRef({ x: 0, y: 0 });
 
   const getWorldPos = useCallback((e: React.MouseEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -22,13 +23,92 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     return controller.renderer.camera.screenToWorld(sx, sy, rect.width, rect.height);
   }, [controller]);
 
+  // eraseAt must be defined BEFORE it's used in onMouseDown
+  const eraseAt = useCallback((x: number, y: number) => {
+    const world = controller.getWorld();
+    const eraseRadius = 20;
+    const eraseRadiusSq = eraseRadius * eraseRadius;
+    let envChanged = false;
+
+    // Remove agents near cursor
+    world.agents = world.agents.filter(a => {
+      const dx = a.position.x - x;
+      const dy = a.position.y - y;
+      return dx * dx + dy * dy > eraseRadiusSq;
+    });
+
+    // Remove walls near cursor
+    for (let i = world.walls.length - 1; i >= 0; i--) {
+      const w = world.walls[i];
+      // Inline distance from point to wall segment
+      const wdx = w.bx - w.ax;
+      const wdy = w.by - w.ay;
+      const lenSq = wdx * wdx + wdy * wdy;
+      let t = lenSq > 0.0001 ? ((x - w.ax) * wdx + (y - w.ay) * wdy) / lenSq : 0;
+      t = Math.max(0, Math.min(1, t));
+      const cx = w.ax + t * wdx;
+      const cy = w.ay + t * wdy;
+      const ddx = x - cx;
+      const ddy = y - cy;
+      if (ddx * ddx + ddy * ddy < eraseRadiusSq) {
+        world.walls.splice(i, 1);
+        envChanged = true;
+      }
+    }
+
+    // Remove exits near cursor
+    for (let i = world.exits.length - 1; i >= 0; i--) {
+      const ex = world.exits[i];
+      const edx = ex.bx - ex.ax;
+      const edy = ex.by - ex.ay;
+      const lenSq = edx * edx + edy * edy;
+      let t = lenSq > 0.0001 ? ((x - ex.ax) * edx + (y - ex.ay) * edy) / lenSq : 0;
+      t = Math.max(0, Math.min(1, t));
+      const cx = ex.ax + t * edx;
+      const cy = ex.ay + t * edy;
+      const ddx = x - cx;
+      const ddy = y - cy;
+      if (ddx * ddx + ddy * ddy < eraseRadiusSq) {
+        world.exits.splice(i, 1);
+        envChanged = true;
+      }
+    }
+
+    // Remove hazards
+    for (let i = world.hazards.length - 1; i >= 0; i--) {
+      const h = world.hazards[i];
+      const dx = h.x - x;
+      const dy = h.y - y;
+      if (dx * dx + dy * dy < (h.radius + eraseRadius) * (h.radius + eraseRadius)) {
+        world.hazards.splice(i, 1);
+        envChanged = true;
+      }
+    }
+
+    // Remove attractors
+    for (let i = world.attractors.length - 1; i >= 0; i--) {
+      const a = world.attractors[i];
+      const dx = a.x - x;
+      const dy = a.y - y;
+      if (dx * dx + dy * dy < (a.radius + eraseRadius) * (a.radius + eraseRadius)) {
+        world.attractors.splice(i, 1);
+        envChanged = true;
+      }
+    }
+
+    if (envChanged) {
+      controller.renderer.environmentLayer.forceRedraw();
+      controller.engine.flowField.markDirty();
+    }
+  }, [controller]);
+
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     const worldPos = getWorldPos(e);
 
-    // Middle mouse or space+click for panning
-    if (e.button === 1) {
+    // Middle mouse or right-click for panning
+    if (e.button === 1 || e.button === 2) {
       isPanning.current = true;
-      dragStart.current = { x: e.clientX, y: e.clientY };
+      lastScreenPos.current = { x: e.clientX, y: e.clientY };
       return;
     }
 
@@ -50,16 +130,16 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     } else if (mode === 'erase') {
       eraseAt(worldPos.x, worldPos.y);
     }
-  }, [controller, mode, getWorldPos]);
+  }, [controller, mode, getWorldPos, eraseAt]);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
     const worldPos = getWorldPos(e);
 
     if (isPanning.current) {
-      const dx = e.clientX - dragStart.current.x;
-      const dy = e.clientY - dragStart.current.y;
+      const dx = e.clientX - lastScreenPos.current.x;
+      const dy = e.clientY - lastScreenPos.current.y;
       controller.renderer.camera.pan(-dx, -dy);
-      dragStart.current = { x: e.clientX, y: e.clientY };
+      lastScreenPos.current = { x: e.clientX, y: e.clientY };
       controller.renderer.environmentLayer.forceRedraw();
       return;
     }
@@ -74,15 +154,16 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
           bx: worldPos.x, by: worldPos.y,
         });
       } else if (mode === 'addAgent') {
-        // Spray agents while dragging
         if (Math.random() < 0.3) {
           controller.getWorld().agents.push(createAgent(worldPos.x, worldPos.y));
         }
+      } else if (mode === 'erase') {
+        eraseAt(worldPos.x, worldPos.y);
       } else if (mode === 'select') {
         controller.renderer.overlayLayer.setSelection(dragStart.current, worldPos);
       }
     }
-  }, [controller, mode, getWorldPos]);
+  }, [controller, mode, getWorldPos, eraseAt]);
 
   const onMouseUp = useCallback((e: React.MouseEvent) => {
     if (isPanning.current) {
@@ -122,50 +203,13 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     controller.renderer.environmentLayer.forceRedraw();
   }, [controller]);
 
-  const eraseAt = useCallback((x: number, y: number) => {
-    const world = controller.getWorld();
-    const eraseRadius = 15;
-    const eraseRadiusSq = eraseRadius * eraseRadius;
-
-    // Remove agents near cursor
-    world.agents = world.agents.filter(a => {
-      const dx = a.position.x - x;
-      const dy = a.position.y - y;
-      return dx * dx + dy * dy > eraseRadiusSq;
-    });
-
-    // Remove hazards
-    for (let i = world.hazards.length - 1; i >= 0; i--) {
-      const h = world.hazards[i];
-      const dx = h.x - x;
-      const dy = h.y - y;
-      if (dx * dx + dy * dy < eraseRadiusSq + h.radius * h.radius) {
-        world.hazards.splice(i, 1);
-        controller.renderer.environmentLayer.forceRedraw();
-      }
-    }
-
-    // Remove attractors
-    for (let i = world.attractors.length - 1; i >= 0; i--) {
-      const a = world.attractors[i];
-      const dx = a.x - x;
-      const dy = a.y - y;
-      if (dx * dx + dy * dy < eraseRadiusSq + a.radius * a.radius) {
-        world.attractors.splice(i, 1);
-        controller.renderer.environmentLayer.forceRedraw();
-      }
-    }
-  }, [controller]);
-
-  const cursorClass = mode === 'select' ? 'cursor-default' :
-    mode === 'erase' ? 'cursor-crosshair' : 'cursor-crosshair';
-
   return (
     <div
-      className={`flex-1 ${cursorClass}`}
+      className="flex-1 cursor-crosshair"
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
+      onMouseLeave={() => { dragging.current = false; isPanning.current = false; }}
       onWheel={onWheel}
       onContextMenu={e => e.preventDefault()}
     >

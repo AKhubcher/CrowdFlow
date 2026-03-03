@@ -7,10 +7,10 @@ import { useSimulation } from '../../bridge/useSimulation';
 import { useSimulationStats } from '../../bridge/useSimulationStats';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { SnapshotManager } from '../../engine/snapshot/SnapshotManager';
+import { presets, roomEvacuation } from '../../presets';
 import { ControlPanel } from './ControlPanel/ControlPanel';
 import { SimCanvas } from './SimCanvas';
 import { AnalyticsOverlay } from './AnalyticsOverlay';
-import { roomEvacuation } from '../../presets';
 
 function buildWorldFromPreset(preset: PresetScenario) {
   const world = createWorld(preset.worldWidth, preset.worldHeight);
@@ -43,7 +43,7 @@ export default function SimulatorPage() {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [mode, setMode] = useState<InteractionMode>('select');
+  const [mode, setMode] = useState<InteractionMode>('addAgent');
   const [activePreset, setActivePreset] = useState('roomEvacuation');
   const [overlays, setOverlays] = useState<Set<VisualizationOverlay>>(new Set());
   const [panicMode, setPanicMode] = useState(false);
@@ -80,12 +80,11 @@ export default function SimulatorPage() {
     if (!controller) return;
     controller.stop();
     setIsPlaying(false);
-    import('../../presets').then(mod => {
-      const preset = mod.presets.find(p => p.id === activePreset);
-      if (preset) {
-        reset(buildWorldFromPreset(preset));
-      }
-    });
+    setPanicMode(false);
+    const preset = presets.find(p => p.id === activePreset);
+    if (preset) {
+      reset(buildWorldFromPreset(preset));
+    }
     snapshotMgr.current.clear();
     setSnapshotCount(0);
     setSnapshotIndex(0);
@@ -100,6 +99,7 @@ export default function SimulatorPage() {
     if (!controller) return;
     controller.stop();
     setIsPlaying(false);
+    setPanicMode(false);
     setActivePreset(preset.id);
     reset(buildWorldFromPreset(preset));
     snapshotMgr.current.clear();
@@ -173,26 +173,42 @@ export default function SimulatorPage() {
   return (
     <div className="h-screen flex flex-col bg-surface-950">
       {/* Top bar */}
-      <div className="h-11 flex items-center px-4 border-b border-white/[0.04] glass-strong flex-shrink-0">
-        <Link to="/" className="text-sm font-semibold text-gradient mr-4">CrowdFlow</Link>
-        <div className="flex items-center gap-1 text-[10px] text-white/30">
-          <span>Simulator</span>
+      <div className="h-12 flex items-center px-4 border-b border-white/[0.06] bg-surface-950/90 backdrop-blur-xl flex-shrink-0">
+        <Link to="/" className="text-sm font-bold text-gradient mr-3 hover:opacity-80 transition-opacity">CrowdFlow</Link>
+        <div className="w-px h-5 bg-white/10 mr-3" />
+        <div className="flex items-center gap-1.5 text-xs text-white/40">
+          <div className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-accent-green animate-pulse' : 'bg-white/20'}`} />
+          <span>{isPlaying ? 'Running' : 'Paused'}</span>
+          <span className="text-white/15 mx-1">|</span>
+          <span className="font-mono text-white/30">{stats.agentCount} agents</span>
         </div>
-        <div className="ml-auto flex items-center gap-3">
-          <Link to="/how-it-works" className="text-xs text-white/40 hover:text-white/70 transition-colors">
+        <div className="ml-auto flex items-center gap-4">
+          <Link to="/how-it-works" className="text-xs text-white/30 hover:text-accent-cyan transition-colors">
             How It Works
           </Link>
-          <Link to="/about" className="text-xs text-white/40 hover:text-white/70 transition-colors">
+          <Link to="/about" className="text-xs text-white/30 hover:text-accent-cyan transition-colors">
             About
           </Link>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex gap-3 p-3 min-h-0">
-        <div className="flex-1 relative rounded-xl overflow-hidden border border-white/[0.04]">
+      <div className="flex-1 flex gap-0 min-h-0">
+        <div className="flex-1 relative">
           <SimCanvas controller={controller} mode={mode} />
           <AnalyticsOverlay stats={stats} />
+          {/* Mode indicator */}
+          <div className="absolute bottom-3 left-3 glass rounded-lg px-3 py-1.5 pointer-events-none">
+            <span className="text-[10px] uppercase tracking-wider text-white/30">
+              {mode === 'select' ? 'Select' :
+               mode === 'addAgent' ? 'Place Agents' :
+               mode === 'addWall' ? 'Draw Wall (drag)' :
+               mode === 'addExit' ? 'Draw Exit (drag)' :
+               mode === 'addHazard' ? 'Place Hazard' :
+               mode === 'addAttractor' ? 'Place Attractor' :
+               'Erase'}
+            </span>
+          </div>
         </div>
         <ControlPanel
           isPlaying={isPlaying}
