@@ -1,16 +1,30 @@
 import type { WorldState } from '../../engine/core/types';
 import { Camera } from '../camera/Camera';
 
+export interface SelectionSet {
+  agentIds: Set<number>;
+  wallIds: Set<number>;
+  exitIds: Set<number>;
+  hazardIds: Set<number>;
+  attractorIds: Set<number>;
+}
+
 export class OverlayLayer {
   private selectionStart: { x: number; y: number } | null = null;
   private selectionEnd: { x: number; y: number } | null = null;
   private cursorPos: { x: number; y: number } | null = null;
   private cursorMode: string = 'select';
   private dirty = false;
+  private selected: SelectionSet | null = null;
 
   setSelection(start: { x: number; y: number } | null, end: { x: number; y: number } | null): void {
     this.selectionStart = start;
     this.selectionEnd = end;
+    this.dirty = true;
+  }
+
+  setSelected(sel: SelectionSet | null): void {
+    this.selected = sel;
     this.dirty = true;
   }
 
@@ -57,6 +71,86 @@ export class OverlayLayer {
         ctx.lineTo(cx, cy);
         ctx.lineTo(cx, cy + dy * markLen);
         ctx.stroke();
+      }
+    }
+
+    // Selected items highlights
+    if (this.selected) {
+      const sel = this.selected;
+
+      // Highlight selected agents
+      if (sel.agentIds.size > 0) {
+        for (const agent of world.agents) {
+          if (sel.agentIds.has(agent.id)) {
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.7)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(agent.position.x, agent.position.y, agent.radius + 4, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Highlight selected walls
+      if (sel.wallIds.size > 0) {
+        for (const wall of world.walls) {
+          if (sel.wallIds.has(wall.id)) {
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.6)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.moveTo(wall.ax, wall.ay);
+            ctx.lineTo(wall.bx, wall.by);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+      }
+
+      // Highlight selected exits
+      if (sel.exitIds.size > 0) {
+        for (const exit of world.exits) {
+          if (sel.exitIds.has(exit.id)) {
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.7)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.moveTo(exit.ax, exit.ay);
+            ctx.lineTo(exit.bx, exit.by);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+      }
+
+      // Highlight selected hazards
+      if (sel.hazardIds.size > 0) {
+        for (const hazard of world.hazards) {
+          if (sel.hazardIds.has(hazard.id)) {
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.arc(hazard.x, hazard.y, hazard.radius + 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+      }
+
+      // Highlight selected attractors
+      if (sel.attractorIds.size > 0) {
+        for (const attractor of world.attractors) {
+          if (sel.attractorIds.has(attractor.id)) {
+            ctx.strokeStyle = 'rgba(139, 92, 246, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.arc(attractor.x, attractor.y, attractor.radius + 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
       }
     }
 

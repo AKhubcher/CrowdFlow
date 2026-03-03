@@ -68,6 +68,51 @@ export default function SimulatorPage() {
   const [snapshotCount, setSnapshotCount] = useState(0);
   const [snapshotIndex, setSnapshotIndex] = useState(0);
 
+  // Resizable panel
+  const [panelWidth, setPanelWidth] = useState(() => {
+    const saved = localStorage.getItem('crowdflow_panel_width');
+    return saved ? Math.max(220, Math.min(480, Number(saved))) : 288;
+  });
+  const resizing = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const onResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMove = (ev: MouseEvent) => {
+      if (!resizing.current || !containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newWidth = Math.max(220, Math.min(480, containerRect.right - ev.clientX));
+      setPanelWidth(newWidth);
+    };
+
+    const onUp = () => {
+      resizing.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      setPanelWidth(w => { localStorage.setItem('crowdflow_panel_width', String(w)); return w; });
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, []);
+
+  // Re-fit camera when panel width changes
+  useEffect(() => {
+    if (!controller) return;
+    const timer = setTimeout(() => {
+      controller.fitCameraToWorld();
+      controller.renderer.environmentLayer.forceRedraw();
+      controller.renderOnce();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [panelWidth, controller]);
+
   // Apply preset from navigation state (e.g. from Scenarios page)
   const appliedPresetRef = useRef<string | null>(null);
   useEffect(() => {
@@ -329,12 +374,15 @@ export default function SimulatorPage() {
             <Link to="/how-it-works" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
               How It Works
             </Link>
+            <Link to="/about" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
+              About
+            </Link>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex min-h-0">
+      <div ref={containerRef} className="flex-1 flex min-h-0">
         <div className="flex-1 relative">
           <SimCanvas controller={controller} mode={mode} />
           {/* Mode indicator */}
@@ -346,11 +394,20 @@ export default function SimulatorPage() {
           {/* Keyboard hints */}
           <div className="absolute bottom-3 right-3 bg-surface-950/40 backdrop-blur-xl rounded-lg px-2.5 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[9px] text-white/15 font-mono">
-              Space: Play/Pause | Scroll: Zoom | RMB: Pan
+              Space: Play/Pause | Scroll: Zoom | RMB: Pan | Del: Delete Selection | Ctrl+C/V: Copy/Paste
             </span>
           </div>
         </div>
+        {/* Resize handle */}
+        <div
+          onMouseDown={onResizeStart}
+          className="w-1.5 flex-shrink-0 cursor-col-resize relative group hover:bg-cyan-500/20 active:bg-cyan-500/30 transition-colors"
+        >
+          <div className="absolute inset-y-0 -left-1 -right-1" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-white/10 group-hover:bg-cyan-400/50 transition-colors" />
+        </div>
         <ControlPanel
+          width={panelWidth}
           isPlaying={isPlaying}
           speed={speed}
           mode={mode}

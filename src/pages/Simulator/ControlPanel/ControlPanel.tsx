@@ -7,6 +7,7 @@ import { AgentSettings } from './AgentSettings';
 import { TimelineScrubber } from './TimelineScrubber';
 
 interface ControlPanelProps {
+  width: number;
   isPlaying: boolean;
   speed: number;
   mode: InteractionMode;
@@ -32,7 +33,7 @@ interface ControlPanelProps {
 
 export function ControlPanel(props: ControlPanelProps) {
   return (
-    <div className="w-72 flex-shrink-0 h-full overflow-y-auto bg-surface-950/80 backdrop-blur-xl border-l border-white/[0.04] p-4 flex flex-col gap-4">
+    <div style={{ width: props.width }} className="flex-shrink-0 h-full overflow-y-auto bg-surface-950/80 backdrop-blur-xl border-l border-white/[0.04] p-4 flex flex-col gap-4">
       {/* Stats dashboard */}
       <div className="grid grid-cols-2 gap-2">
         <StatBadge label="Agents" value={props.stats.agentCount} gradient="from-cyan-500/20 to-cyan-500/5" />

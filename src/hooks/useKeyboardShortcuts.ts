@@ -14,6 +14,9 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
+      // Don't trigger tool shortcuts when Ctrl/Meta is held (reserved for copy/paste)
+      if (e.ctrlKey || e.metaKey) return;
+
       switch (e.key) {
         case ' ':
           e.preventDefault();
