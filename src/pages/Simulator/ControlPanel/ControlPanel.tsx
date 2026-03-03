@@ -27,6 +27,7 @@ interface ControlPanelProps {
   onSpawnBatch: (count: number) => void;
   onClearAgents: () => void;
   onScrubTimeline: (index: number) => void;
+  onSaveLayout: () => void;
 }
 
 export function ControlPanel(props: ControlPanelProps) {
@@ -78,6 +79,22 @@ export function ControlPanel(props: ControlPanelProps) {
         onScrub={props.onScrubTimeline}
         currentTick={props.stats.tick}
       />
+
+      <Divider />
+      {/* Save layout */}
+      <div className="flex flex-col gap-2">
+        <span className="text-[10px] text-white/30 uppercase tracking-widest font-medium">Layout</span>
+        <button
+          onClick={props.onSaveLayout}
+          className="h-9 rounded-lg text-[11px] font-medium bg-gradient-to-r from-purple-500/15 to-blue-500/15 text-purple-300 ring-1 ring-purple-500/20 hover:from-purple-500/25 hover:to-blue-500/25 transition-all flex items-center justify-center gap-2"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 13H3a1 1 0 01-1-1V2a1 1 0 011-1h6l3 3v8a1 1 0 01-1 1z" />
+            <path d="M9 13V8H5v5M5 1v3h3" />
+          </svg>
+          Save Current Layout
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import type { InteractionMode, VisualizationOverlay, PresetScenario } from '../../engine/core/types';
 import { createWorld, addWall, addExit, addHazard, addAttractor } from '../../engine/core/World';
 import { createAgent } from '../../engine/core/Agent';
@@ -7,7 +7,7 @@ import { useSimulation } from '../../bridge/useSimulation';
 import { useSimulationStats } from '../../bridge/useSimulationStats';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { SnapshotManager } from '../../engine/snapshot/SnapshotManager';
-import { SimulationSession, loadSessions, saveSessions } from '../../engine/core/SessionTracker';
+import { SimulationSession, loadSessions, saveSessions, saveCustomScenario, loadCustomScenarios } from '../../engine/core/SessionTracker';
 import { presets, roomEvacuation } from '../../presets';
 import { ControlPanel } from './ControlPanel/ControlPanel';
 import { SimCanvas } from './SimCanvas';
@@ -37,15 +37,31 @@ function buildWorldFromPreset(preset: PresetScenario) {
   return world;
 }
 
+function getInitialPreset(presetId?: string): PresetScenario {
+  if (presetId) {
+    // Check built-in presets first
+    const found = presets.find(p => p.id === presetId);
+    if (found) return found;
+    // Check custom scenarios from localStorage
+    const custom = loadCustomScenarios().find(s => s.id === presetId);
+    if (custom) return custom;
+  }
+  return roomEvacuation;
+}
+
 export default function SimulatorPage() {
-  const { controller, reset } = useSimulation(buildWorldFromPreset(roomEvacuation));
+  const location = useLocation();
+  const locationPresetId = (location.state as { presetId?: string })?.presetId;
+  const initialPreset = useMemo(() => getInitialPreset(locationPresetId), [locationPresetId]);
+
+  const { controller, reset } = useSimulation(buildWorldFromPreset(initialPreset));
   const stats = useSimulationStats(controller);
   const snapshotMgr = useRef(new SnapshotManager());
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [mode, setMode] = useState<InteractionMode>('addAgent');
-  const [activePreset, setActivePreset] = useState('roomEvacuation');
+  const [activePreset, setActivePreset] = useState(initialPreset.id);
   const [overlays, setOverlays] = useState<Set<VisualizationOverlay>>(new Set());
   const [panicMode, setPanicMode] = useState(false);
   const [snapshotCount, setSnapshotCount] = useState(0);
@@ -83,7 +99,6 @@ export default function SimulatorPage() {
       panicModeUsed: panicMode,
       evacuationComplete: world.agents.length === 0 && stats.exitedCount > 0,
     };
-    // Only save if session lasted > 2 seconds and had agents
     if (session.durationMs > 2000 && session.initialAgents > 0) {
       sessions.push(session);
       saveSessions(sessions);
@@ -121,7 +136,6 @@ export default function SimulatorPage() {
       controller.stop();
       saveCurrentSession();
     } else {
-      // Start new session
       if (sessionStart.current === 0) {
         sessionStart.current = Date.now();
         initialAgentCount.current = controller.getWorld().agents.length;
@@ -228,6 +242,30 @@ export default function SimulatorPage() {
     controller.renderer.render(controller.engine.world, controller.engine.flowField);
   }, [controller]);
 
+  const handleSaveLayout = useCallback(() => {
+    if (!controller) return;
+    const world = controller.getWorld();
+    const name = `Custom ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+    const id = `custom_${Date.now()}`;
+
+    const scenario: import('../../engine/core/types').PresetScenario = {
+      id,
+      name,
+      description: `Custom layout with ${world.agents.length} agents, ${world.walls.length} walls, ${world.exits.length} exits.`,
+      icon: '🎨',
+      agents: world.agents.map(a => ({ x: a.position.x, y: a.position.y, vx: a.velocity.x, vy: a.velocity.y })),
+      walls: world.walls.map(w => ({ ax: w.ax, ay: w.ay, bx: w.bx, by: w.by })),
+      exits: world.exits.map(e => ({ ax: e.ax, ay: e.ay, bx: e.bx, by: e.by })),
+      hazards: world.hazards.map(h => ({ x: h.x, y: h.y, radius: h.radius, intensity: h.intensity })),
+      attractors: world.attractors.map(a => ({ x: a.x, y: a.y, radius: a.radius, strength: a.strength })),
+      worldWidth: world.width,
+      worldHeight: world.height,
+    };
+
+    saveCustomScenario(scenario);
+    setActivePreset(id);
+  }, [controller]);
+
   const shortcutHandlers = useMemo(() => ({
     togglePlay,
     setMode,
@@ -276,7 +314,7 @@ export default function SimulatorPage() {
       <div className="flex-1 flex min-h-0">
         <div className="flex-1 relative">
           <SimCanvas controller={controller} mode={mode} />
-          <AnalyticsOverlay stats={stats} />
+          <AnalyticsOverlay stats={stats} isPlaying={isPlaying} />
           {/* Mode indicator */}
           <div className="absolute bottom-3 left-3 bg-surface-950/60 backdrop-blur-xl rounded-lg px-3 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[10px] uppercase tracking-widest text-white/25 font-medium">
@@ -311,6 +349,7 @@ export default function SimulatorPage() {
           onSpawnBatch={handleSpawnBatch}
           onClearAgents={handleClearAgents}
           onScrubTimeline={handleScrubTimeline}
+          onSaveLayout={handleSaveLayout}
         />
       </div>
     </div>

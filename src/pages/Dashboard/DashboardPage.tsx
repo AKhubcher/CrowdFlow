@@ -1,11 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { PageLayout } from '../../components/layout/PageLayout';
 import { Section } from '../../components/layout/Section';
-import { SimulationSession, loadSessions, clearSessions } from '../../engine/core/SessionTracker';
+import {
+  SimulationSession,
+  loadSessions,
+  deleteSession,
+  clearSessions,
+  exportSessionsCSV,
+} from '../../engine/core/SessionTracker';
+
+type SortField = 'date' | 'evacRate' | 'duration' | 'fps' | 'stress';
 
 export default function DashboardPage() {
   const [sessions, setSessions] = useState<SimulationSession[]>([]);
+  const [sortBy, setSortBy] = useState<SortField>('date');
+  const [filterScenario, setFilterScenario] = useState<string>('all');
 
   useEffect(() => {
     setSessions(loadSessions());
@@ -15,6 +25,46 @@ export default function DashboardPage() {
     clearSessions();
     setSessions([]);
   };
+
+  const handleDelete = useCallback((id: string) => {
+    deleteSession(id);
+    setSessions(prev => prev.filter(s => s.id !== id));
+  }, []);
+
+  const handleExportCSV = () => {
+    const csv = exportSessionsCSV(filtered);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `crowdflow_sessions_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Get unique scenario names for filter
+  const scenarioNames = [...new Set(sessions.map(s => s.presetName))];
+
+  // Filter
+  const filtered = filterScenario === 'all'
+    ? sessions
+    : sessions.filter(s => s.presetName === filterScenario);
+
+  // Sort
+  const sorted = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case 'date': return b.startTime - a.startTime;
+      case 'evacRate': {
+        const rA = a.initialAgents > 0 ? a.agentsExited / a.initialAgents : 0;
+        const rB = b.initialAgents > 0 ? b.agentsExited / b.initialAgents : 0;
+        return rB - rA;
+      }
+      case 'duration': return b.durationMs - a.durationMs;
+      case 'fps': return b.averageFps - a.averageFps;
+      case 'stress': return b.peakStress - a.peakStress;
+      default: return 0;
+    }
+  });
 
   const totalRuns = sessions.length;
   const totalExited = sessions.reduce((sum, s) => sum + s.agentsExited, 0);
@@ -48,7 +98,12 @@ export default function DashboardPage() {
 
         {sessions.length === 0 ? (
           <div className="text-center py-20">
-            <div className="text-6xl mb-6 opacity-20">{ }</div>
+            <div className="text-5xl mb-6 opacity-20">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto text-white/20">
+                <path d="M3 3v18h18" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7 16l4-8 4 4 4-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
             <h2 className="text-xl font-bold text-white/40 mb-3">No sessions recorded yet</h2>
             <p className="text-sm text-white/25 mb-8 max-w-md mx-auto">
               Run a simulation in the Simulator page — press Play, let it run for a few seconds,
@@ -93,7 +148,6 @@ export default function DashboardPage() {
                       <MiniStat label="Peak Stress" value={`${(s.avgPeakStress * 100).toFixed(0)}%`} />
                       <MiniStat label="Avg FPS" value={s.avgFps.toFixed(0)} />
                     </div>
-                    {/* Simple bar chart for evacuation rate */}
                     <div className="mt-3 h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-cyan-500/50 to-emerald-500/50"
@@ -107,18 +161,59 @@ export default function DashboardPage() {
 
             {/* Session history */}
             <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                 <h2 className="text-lg font-bold text-white/60">Run History</h2>
-                <button
-                  onClick={handleClear}
-                  className="text-[11px] text-white/20 hover:text-red-400 transition-colors"
-                >
-                  Clear All Data
-                </button>
+                <div className="flex items-center gap-3">
+                  {/* Filter by scenario */}
+                  <select
+                    value={filterScenario}
+                    onChange={e => setFilterScenario(e.target.value)}
+                    className="h-8 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/50 focus:outline-none focus:border-cyan-500/30 transition-colors cursor-pointer"
+                  >
+                    <option value="all">All Scenarios</option>
+                    {scenarioNames.map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                  {/* Sort */}
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as SortField)}
+                    className="h-8 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/50 focus:outline-none focus:border-cyan-500/30 transition-colors cursor-pointer"
+                  >
+                    <option value="date">Sort: Latest</option>
+                    <option value="evacRate">Sort: Evac Rate</option>
+                    <option value="duration">Sort: Duration</option>
+                    <option value="fps">Sort: FPS</option>
+                    <option value="stress">Sort: Stress</option>
+                  </select>
+                  {/* Export CSV */}
+                  <button
+                    onClick={handleExportCSV}
+                    className="h-8 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/40 hover:text-cyan-400 hover:border-cyan-500/20 transition-all flex items-center gap-1.5"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2v6M3 6l3 3 3-3M2 10h8" />
+                    </svg>
+                    Export CSV
+                  </button>
+                  {/* Clear all */}
+                  <button
+                    onClick={handleClear}
+                    className="text-[11px] text-white/20 hover:text-red-400 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                </div>
               </div>
+
+              <div className="text-[10px] text-white/15 mb-2">
+                Showing {sorted.length} of {sessions.length} sessions
+              </div>
+
               <div className="space-y-2">
-                {sessions.slice().reverse().map(session => (
-                  <SessionRow key={session.id} session={session} />
+                {sorted.map(session => (
+                  <SessionRow key={session.id} session={session} onDelete={handleDelete} />
                 ))}
               </div>
             </div>
@@ -147,13 +242,13 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SessionRow({ session }: { session: SimulationSession }) {
+function SessionRow({ session, onDelete }: { session: SimulationSession; onDelete: (id: string) => void }) {
   const evacRate = session.initialAgents > 0
     ? ((session.agentsExited / session.initialAgents) * 100).toFixed(0)
     : '0';
 
   return (
-    <div className="flex items-center gap-4 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.03] hover:bg-white/[0.03] transition-colors">
+    <div className="group flex items-center gap-4 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.03] hover:bg-white/[0.03] transition-colors">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-white/60 truncate">{session.presetName}</span>
@@ -199,6 +294,16 @@ function SessionRow({ session }: { session: SimulationSession }) {
           </div>
           <div className="text-[8px] text-white/15 text-center mt-0.5">stress</div>
         </div>
+        {/* Delete button */}
+        <button
+          onClick={() => onDelete(session.id)}
+          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
+          title="Delete session"
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M2 2l6 6M8 2l-6 6" />
+          </svg>
+        </button>
       </div>
     </div>
   );
