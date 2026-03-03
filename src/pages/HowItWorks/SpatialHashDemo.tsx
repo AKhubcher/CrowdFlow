@@ -104,13 +104,13 @@ export function SpatialHashDemo() {
   }, [showGrid, agentCount]);
 
   return (
-    <div className="glass rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-accent-purple mb-4">Spatial Hash Grid</h3>
-      <p className="text-sm text-white/40 mb-4">
+    <div className="glass rounded-xl p-6 max-w-[560px] mx-auto">
+      <h3 className="text-lg font-semibold text-accent-purple mb-4 text-center">Spatial Hash Grid</h3>
+      <p className="text-sm text-white/40 mb-4 text-center">
         The grid partitions space into cells. Neighbor queries only check overlapping cells,
         reducing O(n{'\u00B2'}) to O(n{'\u00B7'}k). Brighter cells indicate higher agent density.
       </p>
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center justify-center gap-4 mb-4">
         <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer">
           <input
             type="checkbox"
@@ -137,7 +137,7 @@ export function SpatialHashDemo() {
           ))}
         </div>
       </div>
-      <canvas ref={canvasRef} className="rounded-lg bg-surface-950 w-full" />
+      <canvas ref={canvasRef} className="rounded-lg bg-surface-950 block mx-auto" />
     </div>
   );
 }

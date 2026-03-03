@@ -47,6 +47,20 @@ export function MiniSimCanvas({ width = 300, height = 200, agentCount = 60, clas
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
 
+      // Exits
+      for (const exit of world.exits) {
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 12;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(exit.ax, exit.ay);
+        ctx.lineTo(exit.bx, exit.by);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
       // Agents
       for (const agent of world.agents) {
         ctx.fillStyle = agent.color;
