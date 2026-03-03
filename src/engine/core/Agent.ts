@@ -25,6 +25,7 @@ export function createAgent(x: number, y: number, vx = 0, vy = 0): AgentData {
     targetExitId: -1,
     color: AGENT_COLOR_CALM,
     groupId: 0,
+    lingerTimer: 0,
     _scratch0: { x: 0, y: 0 },
     _scratch1: { x: 0, y: 0 },
     _scratch2: { x: 0, y: 0 },

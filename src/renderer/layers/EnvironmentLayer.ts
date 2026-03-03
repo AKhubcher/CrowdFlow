@@ -4,12 +4,29 @@ import { Camera } from '../camera/Camera';
 
 export class EnvironmentLayer {
   private dirty = true;
+  private animTime = 0;
+  private animating = false;
+  private lastAnimFrame = 0;
 
   markDirty(): void {
     this.dirty = true;
   }
 
+  /** Call every frame to advance pulse animations and trigger redraws */
+  tick(): void {
+    this.animTime = performance.now() / 1000;
+    // Continuously redraw when hazards or exits exist (for pulse)
+    if (this.animating) this.dirty = true;
+  }
+
+  setAnimating(hasHazardsOrExits: boolean): void {
+    this.animating = hasHazardsOrExits;
+  }
+
   render(ctx: CanvasRenderingContext2D, world: WorldState, camera: Camera, w: number, h: number): void {
+    // Enable animation if world has hazards or exits
+    this.setAnimating(world.hazards.length > 0 || world.exits.length > 0);
+
     if (!this.dirty) return;
     this.dirty = false;
 
@@ -52,20 +69,23 @@ export class EnvironmentLayer {
     }
 
     // Hazards — pulsing danger zones
+    const hazardPulse = 0.5 + 0.5 * Math.sin(this.animTime * 3.5);
     for (const h of world.hazards) {
-      // Outer aura
-      const outerGradient = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, h.radius * 1.3);
-      outerGradient.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
-      outerGradient.addColorStop(0.6, 'rgba(239, 68, 68, 0.08)');
+      const pulseRadius = h.radius * (1.2 + 0.15 * hazardPulse);
+
+      // Outer aura — pulsing
+      const outerGradient = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, pulseRadius);
+      outerGradient.addColorStop(0, `rgba(239, 68, 68, ${0.2 + 0.12 * hazardPulse})`);
+      outerGradient.addColorStop(0.6, `rgba(239, 68, 68, ${0.06 + 0.04 * hazardPulse})`);
       outerGradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
       ctx.fillStyle = outerGradient;
       ctx.beginPath();
-      ctx.arc(h.x, h.y, h.radius * 1.3, 0, Math.PI * 2);
+      ctx.arc(h.x, h.y, pulseRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Inner core
+      // Inner core — pulsing
       const innerGradient = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, h.radius * 0.5);
-      innerGradient.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
+      innerGradient.addColorStop(0, `rgba(239, 68, 68, ${0.3 + 0.2 * hazardPulse})`);
       innerGradient.addColorStop(1, 'rgba(239, 68, 68, 0.05)');
       ctx.fillStyle = innerGradient;
       ctx.beginPath();
@@ -75,7 +95,7 @@ export class EnvironmentLayer {
       // Dashed border ring
       ctx.strokeStyle = HAZARD_COLOR;
       ctx.lineWidth = 1.5;
-      ctx.globalAlpha = 0.5;
+      ctx.globalAlpha = 0.35 + 0.25 * hazardPulse;
       ctx.setLineDash([3, 6]);
       ctx.beginPath();
       ctx.arc(h.x, h.y, h.radius, 0, Math.PI * 2);
@@ -84,7 +104,7 @@ export class EnvironmentLayer {
       ctx.globalAlpha = 1;
 
       // Center icon — small X
-      ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.4 + 0.3 * hazardPulse})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(h.x - 5, h.y - 5);
@@ -158,22 +178,25 @@ export class EnvironmentLayer {
       ctx.globalAlpha = 1;
     }
 
-    // Exits — bright glowing portals
+    // Exits — bright glowing portals with breathing pulse
+    const exitPulse = 0.5 + 0.5 * Math.sin(this.animTime * 2.2);
     for (const exit of world.exits) {
-      // Wide glow
+      // Wide glow — breathing
       ctx.shadowColor = EXIT_COLOR;
-      ctx.shadowBlur = 20;
+      ctx.shadowBlur = 16 + 10 * exitPulse;
       ctx.strokeStyle = EXIT_COLOR;
-      ctx.lineWidth = 6;
+      ctx.lineWidth = 5 + 2 * exitPulse;
       ctx.lineCap = 'round';
+      ctx.globalAlpha = 0.7 + 0.3 * exitPulse;
       ctx.beginPath();
       ctx.moveTo(exit.ax, exit.ay);
       ctx.lineTo(exit.bx, exit.by);
       ctx.stroke();
       ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
 
       // Bright core
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + 0.15 * exitPulse})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(exit.ax, exit.ay);

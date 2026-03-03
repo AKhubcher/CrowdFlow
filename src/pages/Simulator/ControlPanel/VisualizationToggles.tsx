@@ -13,6 +13,7 @@ const overlayOptions: { key: VisualizationOverlay; label: string; color: string;
   { key: 'trails', label: 'Trails', color: 'text-white/40', activeColor: 'text-cyan-400' },
   { key: 'velocityVectors', label: 'Velocity', color: 'text-white/40', activeColor: 'text-blue-400' },
   { key: 'grid', label: 'Grid', color: 'text-white/40', activeColor: 'text-indigo-400' },
+  { key: 'bottleneck', label: 'Bottleneck', color: 'text-white/40', activeColor: 'text-amber-400' },
 ];
 
 const dotColors: Record<string, string> = {
@@ -21,6 +22,7 @@ const dotColors: Record<string, string> = {
   'text-cyan-400': 'bg-cyan-400',
   'text-blue-400': 'bg-blue-400',
   'text-indigo-400': 'bg-indigo-400',
+  'text-amber-400': 'bg-amber-400',
 };
 
 export function VisualizationToggles({ overlays, onToggle, panicMode, onTogglePanic }: VisualizationTogglesProps) {

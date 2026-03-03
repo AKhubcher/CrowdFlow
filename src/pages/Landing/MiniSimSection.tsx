@@ -45,7 +45,7 @@ export function MiniSimSection() {
             <div className="relative group">
               <div className="absolute -inset-4 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative rounded-2xl border border-white/[0.06] overflow-hidden bg-surface-950 p-1">
-                <MiniSimCanvas width={420} height={300} agentCount={100} className="rounded-xl" />
+                <MiniSimCanvas width={600} height={400} agentCount={120} className="rounded-xl" />
               </div>
               <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full glass text-[10px] text-white/30 font-mono">
                 live simulation

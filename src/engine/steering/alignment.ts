@@ -4,6 +4,7 @@ import { SpatialHashGrid } from '../spatial/SpatialHashGrid';
 
 /**
  * Alignment: steer toward the average heading of nearby agents.
+ * Only aligns with agents in the same group or heading in a similar direction (dot product > 0).
  */
 export function alignment(out: Vec2, agent: AgentData, grid: SpatialHashGrid): Vec2 {
   out.x = 0;
@@ -16,13 +17,23 @@ export function alignment(out: Vec2, agent: AgentData, grid: SpatialHashGrid): V
 
   if (neighbors.length === 0) return out;
 
+  let count = 0;
   for (let i = 0; i < neighbors.length; i++) {
-    out.x += neighbors[i].velocity.x;
-    out.y += neighbors[i].velocity.y;
+    const other = neighbors[i];
+    // Only align with same-group agents or agents heading in a similar direction
+    if (other.groupId !== agent.groupId) {
+      const dot = agent.velocity.x * other.velocity.x + agent.velocity.y * other.velocity.y;
+      if (dot <= 0) continue;
+    }
+    out.x += other.velocity.x;
+    out.y += other.velocity.y;
+    count++;
   }
 
-  out.x /= neighbors.length;
-  out.y /= neighbors.length;
+  if (count === 0) return out;
+
+  out.x /= count;
+  out.y /= count;
 
   const len = Math.sqrt(out.x * out.x + out.y * out.y);
   if (len > 0.0001) {

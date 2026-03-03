@@ -41,6 +41,8 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
   const clearSelection = useCallback(() => {
     selection.current = null;
     controller.renderer.overlayLayer.setSelected(null);
+    controller.renderer.agentLayer.setSelectedAgent(null);
+    controller.renderer.trails.setSelectedAgent(null);
     controller.renderOnce();
   }, [controller]);
 
@@ -89,6 +91,26 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     }
 
     return target;
+  }, [controller]);
+
+  /** Find the agent closest to (x,y) within a grab radius; returns agent id or null. */
+  const findClosestAgent = useCallback((x: number, y: number): number | null => {
+    const world = controller.getWorld();
+    const grabRadius = 20;
+    const grabRadiusSq = grabRadius * grabRadius;
+    let bestDistSq = grabRadiusSq;
+    let bestId: number | null = null;
+
+    for (const a of world.agents) {
+      const dx = a.position.x - x;
+      const dy = a.position.y - y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < bestDistSq) {
+        bestDistSq = distSq;
+        bestId = a.id;
+      }
+    }
+    return bestId;
   }, [controller]);
 
   const computeSelection = useCallback((start: { x: number; y: number }, end: { x: number; y: number }) => {
@@ -253,7 +275,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       } else if (e.key === 'v' && (e.ctrlKey || e.metaKey) && clipboard.current) {
         e.preventDefault();
         pasteClipboard();
-      } else if (e.key === 'Escape' && selection.current) {
+      } else if (e.key === 'Escape') {
         clearSelection();
       }
     };
@@ -381,8 +403,15 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       eraseAt(worldPos.x, worldPos.y);
     } else if (mode === 'select') {
       clearSelection();
+      // Immediately try to select the agent under the click
+      const agentId = findClosestAgent(worldPos.x, worldPos.y);
+      if (agentId !== null) {
+        controller.renderer.agentLayer.setSelectedAgent(agentId);
+        controller.renderer.trails.setSelectedAgent(agentId);
+        controller.renderOnce();
+      }
     }
-  }, [controller, mode, getWorldPos, eraseAt, clearSelection, findDragTarget]);
+  }, [controller, mode, getWorldPos, eraseAt, clearSelection, findDragTarget, findClosestAgent]);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
     const worldPos = getWorldPos(e);

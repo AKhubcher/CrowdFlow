@@ -64,6 +64,25 @@ export class Engine {
         continue;
       }
 
+      // Lingering near attractors
+      if (agent.state === AgentState.Lingering) {
+        agent.lingerTimer--;
+        if (agent.lingerTimer <= 0) {
+          agent.state = AgentState.Moving;
+        } else {
+          // Slow wander while lingering
+          agent.velocity.x *= 0.92;
+          agent.velocity.y *= 0.92;
+          agent.velocity.x += (Math.random() - 0.5) * 0.1;
+          agent.velocity.y += (Math.random() - 0.5) * 0.1;
+          agent.position.x += agent.velocity.x;
+          agent.position.y += agent.velocity.y;
+          this.updateStress(agent);
+          agent.color = this.stressColor(agent.stress);
+          continue;
+        }
+      }
+
       // Compute combined steering force
       steering.computeForce(_steerForce, agent, world, grid, flowField);
 
@@ -82,6 +101,21 @@ export class Engine {
       // Update state
       const speed = Vec2.length(agent.velocity);
       agent.state = speed > 0.1 ? AgentState.Moving : AgentState.Idle;
+
+      // Check attractor proximity for lingering transition
+      if (agent.state === AgentState.Moving && !world.panicMode) {
+        for (const attr of world.attractors) {
+          const adx = agent.position.x - attr.x;
+          const ady = agent.position.y - attr.y;
+          const adist = adx * adx + ady * ady;
+          const innerRadius = attr.radius * 0.35;
+          if (adist < innerRadius * innerRadius) {
+            agent.state = AgentState.Lingering;
+            agent.lingerTimer = 60 + Math.floor(Math.random() * 180); // 1-4 seconds at 60fps
+            break;
+          }
+        }
+      }
 
       // Update stress
       this.updateStress(agent);

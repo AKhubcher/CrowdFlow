@@ -70,6 +70,7 @@ export class SnapshotManager {
         targetExitId: -1,
         color: sa.color,
         groupId: 0,
+        lingerTimer: 0,
         _scratch0: { x: 0, y: 0 },
         _scratch1: { x: 0, y: 0 },
         _scratch2: { x: 0, y: 0 },

@@ -1,12 +1,26 @@
 import { useState } from 'react';
+import type { SteeringWeights } from '../../../engine/steering/SteeringManager';
 
 interface AgentSettingsProps {
   agentCount: number;
   onSpawnBatch: (count: number) => void;
   onClearAgents: () => void;
+  weights: SteeringWeights;
+  maxSpeed: number;
+  onWeightChange: (key: keyof SteeringWeights, value: number) => void;
+  onMaxSpeedChange: (value: number) => void;
 }
 
-export function AgentSettings({ agentCount, onSpawnBatch, onClearAgents }: AgentSettingsProps) {
+const sliderDefs: { key: keyof SteeringWeights; label: string; min: number; max: number; step: number }[] = [
+  { key: 'goal', label: 'Goal Seeking', min: 0, max: 4, step: 0.1 },
+  { key: 'separation', label: 'Separation', min: 0, max: 6, step: 0.1 },
+  { key: 'alignment', label: 'Alignment', min: 0, max: 2, step: 0.05 },
+  { key: 'wallAvoidance', label: 'Wall Avoidance', min: 0, max: 6, step: 0.1 },
+  { key: 'hazardAvoidance', label: 'Hazard Avoidance', min: 0, max: 8, step: 0.1 },
+  { key: 'attractorPull', label: 'Attractor Pull', min: 0, max: 3, step: 0.1 },
+];
+
+export function AgentSettings({ agentCount, onSpawnBatch, onClearAgents, weights, maxSpeed, onWeightChange, onMaxSpeedChange }: AgentSettingsProps) {
   const [customCount, setCustomCount] = useState('');
 
   const handleCustomSpawn = () => {
@@ -60,6 +74,45 @@ export function AgentSettings({ agentCount, onSpawnBatch, onClearAgents }: Agent
       >
         Clear All
       </button>
+
+      {/* Parameter sliders */}
+      <div className="mt-1 pt-2.5 border-t border-white/[0.04]">
+        <span className="text-[10px] text-white/30 uppercase tracking-widest font-medium">Parameters</span>
+        <div className="mt-2 space-y-2">
+          <SliderRow label="Max Speed" value={maxSpeed} min={0.5} max={5} step={0.1} onChange={onMaxSpeedChange} />
+          {sliderDefs.map(s => (
+            <SliderRow
+              key={s.key}
+              label={s.label}
+              value={weights[s.key]}
+              min={s.min}
+              max={s.max}
+              step={s.step}
+              onChange={v => onWeightChange(s.key, v)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SliderRow({ label, value, min, max, step, onChange }: {
+  label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] text-white/25 w-20 flex-shrink-0 truncate">{label}</span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        className="flex-1 h-1 accent-cyan-400 cursor-pointer"
+      />
+      <span className="text-[10px] text-white/40 font-mono w-8 text-right">{value.toFixed(1)}</span>
     </div>
   );
 }

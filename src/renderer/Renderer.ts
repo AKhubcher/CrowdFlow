@@ -8,6 +8,7 @@ import { OverlayLayer } from './layers/OverlayLayer';
 import { FlowFieldLayer } from './layers/FlowFieldLayer';
 import { GridLayer } from './layers/GridLayer';
 import { UILayer } from './layers/UILayer';
+import { BottleneckLayer } from './layers/BottleneckLayer';
 import { Trails } from './effects/Trails';
 import { Heatmap } from './effects/Heatmap';
 
@@ -19,6 +20,7 @@ export class Renderer {
   flowFieldLayer = new FlowFieldLayer();
   gridLayer = new GridLayer();
   uiLayer = new UILayer();
+  bottleneckLayer = new BottleneckLayer();
   trails = new Trails();
   heatmap = new Heatmap();
 
@@ -64,7 +66,8 @@ export class Renderer {
     const [bgCtx, heatCtx, agentCtx, uiCtx] = this.contexts;
     const dpr = this.camera.dpr;
 
-    // Layer 0: Environment (only on dirty)
+    // Layer 0: Environment (only on dirty — tick advances pulse animations)
+    this.environmentLayer.tick();
     this.environmentLayer.render(bgCtx, world, this.camera, w, h);
 
     // Layer 1: Heatmap + flow field + grid + trails
@@ -76,6 +79,7 @@ export class Renderer {
     this.heatmap.render(heatCtx, this.camera, w, h);
     this.flowFieldLayer.render(heatCtx, flowField, this.camera, w, h);
     this.gridLayer.render(heatCtx, world.width, world.height, this.camera, w, h);
+    this.bottleneckLayer.render(heatCtx, world, this.camera, w, h);
 
     // Trails
     this.trails.update(world.agents);

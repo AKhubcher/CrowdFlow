@@ -1,4 +1,5 @@
 import type { InteractionMode, VisualizationOverlay, PresetScenario, SimulationStats } from '../../../engine/core/types';
+import type { SteeringWeights } from '../../../engine/steering/SteeringManager';
 import { PlaybackControls } from './PlaybackControls';
 import { ToolSelector } from './ToolSelector';
 import { PresetSelector } from './PresetSelector';
@@ -17,6 +18,8 @@ interface ControlPanelProps {
   stats: SimulationStats;
   snapshotCount: number;
   snapshotIndex: number;
+  weights: SteeringWeights;
+  maxSpeed: number;
   onTogglePlay: () => void;
   onStepForward: () => void;
   onReset: () => void;
@@ -29,6 +32,8 @@ interface ControlPanelProps {
   onClearAgents: () => void;
   onScrubTimeline: (index: number) => void;
   onSaveLayout: () => void;
+  onWeightChange: (key: keyof SteeringWeights, value: number) => void;
+  onMaxSpeedChange: (value: number) => void;
 }
 
 export function ControlPanel(props: ControlPanelProps) {
@@ -71,6 +76,10 @@ export function ControlPanel(props: ControlPanelProps) {
         agentCount={props.stats.agentCount}
         onSpawnBatch={props.onSpawnBatch}
         onClearAgents={props.onClearAgents}
+        weights={props.weights}
+        maxSpeed={props.maxSpeed}
+        onWeightChange={props.onWeightChange}
+        onMaxSpeedChange={props.onMaxSpeedChange}
       />
 
       <Divider />

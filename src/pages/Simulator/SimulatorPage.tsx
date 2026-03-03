@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type { InteractionMode, VisualizationOverlay, PresetScenario } from '../../engine/core/types';
+import type { SteeringWeights } from '../../engine/steering/SteeringManager';
 import { createWorld, addWall, addExit, addHazard, addAttractor } from '../../engine/core/World';
 import { createAgent } from '../../engine/core/Agent';
 import { useSimulation } from '../../bridge/useSimulation';
@@ -67,6 +68,8 @@ export default function SimulatorPage() {
   const [panicMode, setPanicMode] = useState(false);
   const [snapshotCount, setSnapshotCount] = useState(0);
   const [snapshotIndex, setSnapshotIndex] = useState(0);
+  const [weights, setWeights] = useState<SteeringWeights>(() => controller ? { ...controller.engine.steering.weights } : { goal: 1, separation: 2.5, alignment: 0.3, wallAvoidance: 3, hazardAvoidance: 4, attractorPull: 0.5, noise: 0 });
+  const [maxSpeed, setMaxSpeed] = useState(2.0);
 
   // Resizable panel
   const [panelWidth, setPanelWidth] = useState(() => {
@@ -267,6 +270,7 @@ export default function SimulatorPage() {
     controller.renderer.trails.setEnabled(overlays.has('trails'));
     controller.renderer.agentLayer.setShowVelocityVectors(overlays.has('velocityVectors'));
     controller.renderer.gridLayer.setEnabled(overlays.has('grid'));
+    controller.renderer.bottleneckLayer.setEnabled(overlays.has('bottleneck'));
   }, [controller, overlays]);
 
   const handleTogglePanic = useCallback(() => {
@@ -289,6 +293,20 @@ export default function SimulatorPage() {
   const handleClearAgents = useCallback(() => {
     if (!controller) return;
     controller.getWorld().agents.length = 0;
+  }, [controller]);
+
+  const handleWeightChange = useCallback((key: keyof SteeringWeights, value: number) => {
+    if (!controller) return;
+    controller.engine.steering.weights[key] = value;
+    setWeights({ ...controller.engine.steering.weights });
+  }, [controller]);
+
+  const handleMaxSpeedChange = useCallback((value: number) => {
+    if (!controller) return;
+    setMaxSpeed(value);
+    for (const agent of controller.getWorld().agents) {
+      agent.maxSpeed = value;
+    }
   }, [controller]);
 
   const handleScrubTimeline = useCallback((index: number) => {
@@ -433,6 +451,10 @@ export default function SimulatorPage() {
           onClearAgents={handleClearAgents}
           onScrubTimeline={handleScrubTimeline}
           onSaveLayout={handleSaveLayout}
+          weights={weights}
+          maxSpeed={maxSpeed}
+          onWeightChange={handleWeightChange}
+          onMaxSpeedChange={handleMaxSpeedChange}
         />
       </div>
 

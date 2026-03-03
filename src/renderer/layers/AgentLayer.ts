@@ -4,9 +4,18 @@ import { Camera } from '../camera/Camera';
 
 export class AgentLayer {
   private showVelocityVectors = false;
+  private selectedAgentId: number | null = null;
 
   setShowVelocityVectors(show: boolean): void {
     this.showVelocityVectors = show;
+  }
+
+  setSelectedAgent(id: number | null): void {
+    this.selectedAgentId = id;
+  }
+
+  getSelectedAgent(): number | null {
+    return this.selectedAgentId;
   }
 
   render(ctx: CanvasRenderingContext2D, world: WorldState, camera: Camera, w: number, h: number): void {
@@ -34,6 +43,17 @@ export class AgentLayer {
     // Second pass — draw bodies
     for (let i = 0; i < agents.length; i++) {
       this.drawAgent(ctx, agents[i]);
+    }
+
+    // Third pass — draw selection highlight ring for the selected agent
+    if (this.selectedAgentId !== null) {
+      for (let i = 0; i < agents.length; i++) {
+        const agent = agents[i];
+        if (agent.id === this.selectedAgentId) {
+          this.drawSelectionRing(ctx, agent);
+          break;
+        }
+      }
     }
 
     ctx.globalAlpha = 1;
@@ -108,5 +128,40 @@ export class AgentLayer {
     }
 
     ctx.globalAlpha = 1;
+  }
+
+  /** Draw an animated pulsing selection ring around the given agent. */
+  private drawSelectionRing(ctx: CanvasRenderingContext2D, agent: AgentData): void {
+    const { x, y } = agent.position;
+    const r = agent.radius;
+    const t = Date.now() * 0.004; // time factor for pulsing
+
+    // Pulsing radius oscillates between 1.6x and 2.2x agent radius
+    const pulseRadius = r * (1.9 + Math.sin(t) * 0.3);
+    // Alpha oscillates between 0.5 and 1.0
+    const pulseAlpha = 0.75 + Math.sin(t) * 0.25;
+
+    ctx.save();
+    ctx.globalAlpha = pulseAlpha;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#ffee88';
+    ctx.shadowBlur = 12;
+
+    ctx.beginPath();
+    ctx.arc(x, y, pulseRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Second ring — slightly larger, lower alpha for a glow halo
+    ctx.globalAlpha = pulseAlpha * 0.35;
+    ctx.strokeStyle = '#ffee88';
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+    ctx.arc(x, y, pulseRadius + 3, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
   }
 }

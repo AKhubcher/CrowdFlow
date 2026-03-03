@@ -1,17 +1,19 @@
-import type { AgentData, Vec2 } from '../core/types';
+import type { AgentData, Vec2, WorldState } from '../core/types';
 import { SEPARATION_RADIUS } from '../core/constants';
 import { SpatialHashGrid } from '../spatial/SpatialHashGrid';
 
 /**
  * Separation: steer away from nearby agents.
+ * In panic mode, separation radius increases by 50%.
  */
-export function separation(out: Vec2, agent: AgentData, grid: SpatialHashGrid): Vec2 {
+export function separation(out: Vec2, agent: AgentData, grid: SpatialHashGrid, panicMode = false): Vec2 {
   out.x = 0;
   out.y = 0;
 
+  const radius = panicMode ? SEPARATION_RADIUS * 1.5 : SEPARATION_RADIUS;
   const neighbors = grid.queryRadius(
     agent.position.x, agent.position.y,
-    SEPARATION_RADIUS, agent,
+    radius, agent,
   );
 
   if (neighbors.length === 0) return out;

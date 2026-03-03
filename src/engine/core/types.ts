@@ -9,6 +9,7 @@ export const enum AgentState {
   Exiting = 2,
   Panicked = 3,
   Frozen = 4,
+  Lingering = 5,
 }
 
 export interface AgentData {
@@ -26,6 +27,8 @@ export interface AgentData {
   targetExitId: number;
   color: string;
   groupId: number;
+  // Lingering state
+  lingerTimer: number;
   // Scratch vectors — pre-allocated per agent for zero-alloc math
   _scratch0: Vec2;
   _scratch1: Vec2;
@@ -105,7 +108,8 @@ export type VisualizationOverlay =
   | 'flowField'
   | 'trails'
   | 'velocityVectors'
-  | 'grid';
+  | 'grid'
+  | 'bottleneck';
 
 export interface PresetScenario {
   id: string;

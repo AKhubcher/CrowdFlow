@@ -96,7 +96,7 @@ export class SteeringManager {
       V.zero(_goalForce);
     }
 
-    separation(_sepForce, agent, grid);
+    separation(_sepForce, agent, grid, world.panicMode);
     alignment(_alignForce, agent, grid);
     wallAvoidance(_wallForce, agent, world.walls);
     hazardAvoidance(_hazardForce, agent, world.hazards);

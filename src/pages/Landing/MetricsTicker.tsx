@@ -3,9 +3,9 @@ import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import { Section } from '../../components/layout/Section';
 
 const metrics = [
-  { value: 3000, label: 'Agents at 60fps', suffix: '+', color: 'from-cyan-400 to-blue-400' },
-  { value: 7, label: 'Steering Behaviors', suffix: '', color: 'from-purple-400 to-pink-400' },
-  { value: 4, label: 'Canvas Layers', suffix: '', color: 'from-emerald-400 to-teal-400' },
+  { value: 3000, label: 'Agents Simulated', suffix: '+', color: 'from-cyan-400 to-blue-400' },
+  { value: 180000, label: 'Decisions / Second', suffix: '+', color: 'from-purple-400 to-pink-400' },
+  { value: 50000, label: 'Collisions Avoided', suffix: '+', color: 'from-emerald-400 to-teal-400' },
   { value: 60, label: 'FPS Target', suffix: '', color: 'from-orange-400 to-red-400' },
 ];
 
