@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import type { InteractionMode, VisualizationOverlay, PresetScenario, SimulationStats } from '../../../engine/core/types';
 import { PlaybackControls } from './PlaybackControls';
 import { ToolSelector } from './ToolSelector';
@@ -18,8 +17,6 @@ interface ControlPanelProps {
   stats: SimulationStats;
   snapshotCount: number;
   snapshotIndex: number;
-  worldWidth: number;
-  worldHeight: number;
   onTogglePlay: () => void;
   onStepForward: () => void;
   onReset: () => void;
@@ -32,7 +29,6 @@ interface ControlPanelProps {
   onClearAgents: () => void;
   onScrubTimeline: (index: number) => void;
   onSaveLayout: () => void;
-  onWorldResize: (width: number, height: number) => void;
 }
 
 export function ControlPanel(props: ControlPanelProps) {
@@ -61,13 +57,6 @@ export function ControlPanel(props: ControlPanelProps) {
 
       <Divider />
       <PresetSelector activePreset={props.activePreset} onSelect={props.onPresetSelect} />
-
-      <Divider />
-      <WorldSizeControls
-        worldWidth={props.worldWidth}
-        worldHeight={props.worldHeight}
-        onResize={props.onWorldResize}
-      />
 
       <Divider />
       <VisualizationToggles
@@ -106,65 +95,6 @@ export function ControlPanel(props: ControlPanelProps) {
           </svg>
           Save Current Layout
         </button>
-      </div>
-    </div>
-  );
-}
-
-function WorldSizeControls({ worldWidth, worldHeight, onResize }: {
-  worldWidth: number;
-  worldHeight: number;
-  onResize: (w: number, h: number) => void;
-}) {
-  const [w, setW] = useState(worldWidth);
-  const [h, setH] = useState(worldHeight);
-
-  // Sync local state when world changes externally (e.g. preset loaded)
-  useEffect(() => { setW(worldWidth); }, [worldWidth]);
-  useEffect(() => { setH(worldHeight); }, [worldHeight]);
-
-  const applyWidth = (val: number) => {
-    const clamped = Math.max(200, Math.min(3000, val));
-    setW(clamped);
-    onResize(clamped, h);
-  };
-
-  const applyHeight = (val: number) => {
-    const clamped = Math.max(200, Math.min(2000, val));
-    setH(clamped);
-    onResize(w, clamped);
-  };
-
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[10px] text-white/30 uppercase tracking-widest font-medium">World Size</span>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-[9px] text-white/20 font-mono">Width</label>
-          <input
-            type="range"
-            min={200}
-            max={3000}
-            step={50}
-            value={w}
-            onChange={e => applyWidth(Number(e.target.value))}
-            className="w-full accent-cyan-500 h-1"
-          />
-          <span className="text-[10px] text-white/40 font-mono text-center">{Math.round(w)}</span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-[9px] text-white/20 font-mono">Height</label>
-          <input
-            type="range"
-            min={200}
-            max={2000}
-            step={50}
-            value={h}
-            onChange={e => applyHeight(Number(e.target.value))}
-            className="w-full accent-cyan-500 h-1"
-          />
-          <span className="text-[10px] text-white/40 font-mono text-center">{Math.round(h)}</span>
-        </div>
       </div>
     </div>
   );

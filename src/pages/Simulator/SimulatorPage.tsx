@@ -324,11 +324,6 @@ export default function SimulatorPage() {
     showToast(`Layout saved as "${name}"`);
   }, [controller]);
 
-  const handleWorldResize = useCallback((width: number, height: number) => {
-    if (!controller) return;
-    controller.resizeWorld(width, height);
-  }, [controller]);
-
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -371,14 +366,14 @@ export default function SimulatorPage() {
             <AnalyticsOverlay stats={stats} isPlaying={isPlaying} />
           </div>
           <div className="flex items-center gap-5">
-            <Link to="/dashboard" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
-              Dashboard
-            </Link>
             <Link to="/scenarios" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
               Scenarios
             </Link>
             <Link to="/how-it-works" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
               How It Works
+            </Link>
+            <Link to="/dashboard" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
+              Dashboard
             </Link>
             <Link to="/about" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
               About
@@ -400,7 +395,7 @@ export default function SimulatorPage() {
           {/* Keyboard hints */}
           <div className="absolute bottom-3 right-3 bg-surface-950/40 backdrop-blur-xl rounded-lg px-2.5 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[9px] text-white/15 font-mono">
-              Space: Play/Pause | Scroll: Zoom | RMB: Pan | Del: Delete Selection | Ctrl+C/V: Copy/Paste
+              Space: Play/Pause | Scroll: Zoom | RMB: Pan | Shift+Corner: Resize | Del: Delete | Ctrl+C/V: Copy/Paste
             </span>
           </div>
         </div>
@@ -423,8 +418,6 @@ export default function SimulatorPage() {
           stats={stats}
           snapshotCount={snapshotCount}
           snapshotIndex={snapshotIndex}
-          worldWidth={controller.getWorld().width}
-          worldHeight={controller.getWorld().height}
           onTogglePlay={togglePlay}
           onStepForward={stepForward}
           onReset={handleReset}
@@ -437,7 +430,6 @@ export default function SimulatorPage() {
           onClearAgents={handleClearAgents}
           onScrubTimeline={handleScrubTimeline}
           onSaveLayout={handleSaveLayout}
-          onWorldResize={handleWorldResize}
         />
       </div>
 

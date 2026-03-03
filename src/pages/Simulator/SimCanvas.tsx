@@ -22,6 +22,22 @@ type DragTarget =
   | { type: 'exitB'; exit: ExitData }
   | null;
 
+type ResizeCorner = 'topRight' | 'bottomLeft' | 'bottomRight' | null;
+
+function findNearCorner(wx: number, wy: number, width: number, height: number): ResizeCorner {
+  const radius = 35;
+  if (Math.abs(wx - width) < radius && Math.abs(wy - height) < radius) return 'bottomRight';
+  if (Math.abs(wx - width) < radius && Math.abs(wy) < radius) return 'topRight';
+  if (Math.abs(wx) < radius && Math.abs(wy - height) < radius) return 'bottomLeft';
+  return null;
+}
+
+function getResizeCursor(corner: ResizeCorner): string {
+  if (corner === 'bottomRight') return 'nwse-resize';
+  if (corner === 'topRight' || corner === 'bottomLeft') return 'nesw-resize';
+  return '';
+}
+
 interface SimCanvasProps {
   controller: SimulationController;
   mode: InteractionMode;
@@ -37,6 +53,8 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
   const lastCursorWorld = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const dragTarget = useRef<DragTarget>(null);
+  const cornerDrag = useRef<ResizeCorner>(null);
+  const shiftHeld = useRef(false);
 
   const clearSelection = useCallback(() => {
     selection.current = null;
@@ -262,6 +280,24 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [deleteSelection, copySelection, pasteClipboard, clearSelection]);
 
+  // Track Shift key for corner resize
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') shiftHeld.current = true;
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        shiftHeld.current = false;
+        if (containerRef.current && !cornerDrag.current) {
+          containerRef.current.style.cursor = '';
+        }
+      }
+    };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+  }, []);
+
   const eraseAt = useCallback((x: number, y: number) => {
     const world = controller.getWorld();
     const eraseRadius = 20;
@@ -347,6 +383,17 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
 
     if (e.button !== 0) return;
 
+    // Shift + left click near corner: start world resize
+    if (shiftHeld.current) {
+      const world = controller.getWorld();
+      const corner = findNearCorner(worldPos.x, worldPos.y, world.width, world.height);
+      if (corner) {
+        cornerDrag.current = corner;
+        dragging.current = true;
+        return;
+      }
+    }
+
     // Null mode: try to grab an agent or exit, else pan
     if (mode === null) {
       const target = findDragTarget(worldPos.x, worldPos.y);
@@ -387,6 +434,38 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
   const onMouseMove = useCallback((e: React.MouseEvent) => {
     const worldPos = getWorldPos(e);
     lastCursorWorld.current = worldPos;
+
+    // Update cursor for corner resize hint
+    if (containerRef.current) {
+      if (cornerDrag.current) {
+        containerRef.current.style.cursor = getResizeCursor(cornerDrag.current);
+      } else if (shiftHeld.current) {
+        const world = controller.getWorld();
+        const corner = findNearCorner(worldPos.x, worldPos.y, world.width, world.height);
+        containerRef.current.style.cursor = corner ? getResizeCursor(corner) : '';
+      } else if (!dragging.current && !isPanning.current) {
+        containerRef.current.style.cursor = '';
+      }
+    }
+
+    // Handle corner resize drag
+    if (cornerDrag.current) {
+      const world = controller.getWorld();
+      let newWidth = world.width;
+      let newHeight = world.height;
+
+      if (cornerDrag.current === 'bottomRight' || cornerDrag.current === 'topRight') {
+        newWidth = Math.max(200, Math.min(3000, worldPos.x));
+      }
+      if (cornerDrag.current === 'bottomRight' || cornerDrag.current === 'bottomLeft') {
+        newHeight = Math.max(200, Math.min(2000, worldPos.y));
+      }
+
+      controller.engine.resizeWorld(newWidth, newHeight);
+      controller.renderer.environmentLayer.forceRedraw();
+      controller.renderOnce();
+      return;
+    }
 
     if (isPanning.current) {
       const dx = e.clientX - lastScreenPos.current.x;
@@ -453,6 +532,14 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       return;
     }
 
+    // Release corner resize
+    if (cornerDrag.current) {
+      cornerDrag.current = null;
+      dragging.current = false;
+      controller.fitCameraToWorld();
+      return;
+    }
+
     // Release drag target
     if (dragTarget.current) {
       dragTarget.current = null;
@@ -511,7 +598,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
-      onMouseLeave={() => { dragging.current = false; isPanning.current = false; dragTarget.current = null; }}
+      onMouseLeave={() => { dragging.current = false; isPanning.current = false; dragTarget.current = null; cornerDrag.current = null; }}
       onWheel={onWheel}
       onContextMenu={e => e.preventDefault()}
     >
