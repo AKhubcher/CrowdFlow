@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { InteractionMode, VisualizationOverlay, PresetScenario, SimulationStats } from '../../../engine/core/types';
 import { PlaybackControls } from './PlaybackControls';
 import { ToolSelector } from './ToolSelector';
@@ -120,8 +120,8 @@ function WorldSizeControls({ worldWidth, worldHeight, onResize }: {
   const [h, setH] = useState(worldHeight);
 
   // Sync local state when world changes externally (e.g. preset loaded)
-  if (Math.round(w) !== Math.round(worldWidth)) setW(worldWidth);
-  if (Math.round(h) !== Math.round(worldHeight)) setH(worldHeight);
+  useEffect(() => { setW(worldWidth); }, [worldWidth]);
+  useEffect(() => { setH(worldHeight); }, [worldHeight]);
 
   const applyWidth = (val: number) => {
     const clamped = Math.max(200, Math.min(3000, val));
