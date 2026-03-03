@@ -12,6 +12,7 @@ interface Snapshot {
     state: number;
     stress: number;
     color: string;
+    maxSpeed: number;
   }>;
   panicMode: boolean;
 }
@@ -23,7 +24,15 @@ export class SnapshotManager {
 
   capture(world: WorldState): void {
     if (world.tick % this.interval !== 0) return;
+    this._doCapture(world);
+  }
 
+  /** Capture unconditionally (ignores tick guard), used by real-time intervals. */
+  captureForced(world: WorldState): void {
+    this._doCapture(world);
+  }
+
+  private _doCapture(world: WorldState): void {
     const snap: Snapshot = {
       tick: world.tick,
       panicMode: world.panicMode,
@@ -36,6 +45,7 @@ export class SnapshotManager {
         state: a.state,
         stress: a.stress,
         color: a.color,
+        maxSpeed: a.maxSpeed,
       })),
     };
 
@@ -62,7 +72,7 @@ export class SnapshotManager {
         desiredVelocity: { x: 0, y: 0 },
         acceleration: { x: 0, y: 0 },
         radius: 5,
-        maxSpeed: 2,
+        maxSpeed: sa.maxSpeed,
         maxForce: 0.15,
         mass: 1,
         state: sa.state,

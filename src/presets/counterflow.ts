@@ -5,22 +5,24 @@ export const counterflow: PresetScenario = {
   name: 'Counterflow',
   description: 'Two groups of agents moving in opposite directions through a corridor.',
   icon: '↔️',
-  agents: [
-    // Left group heading right
-    ...Array.from({ length: 80 }, () => ({
-      x: 50 + Math.random() * 200,
-      y: 300 + Math.random() * 200,
-      vx: 1,
-      vy: 0,
-    })),
-    // Right group heading left
-    ...Array.from({ length: 80 }, () => ({
-      x: 950 + Math.random() * 200,
-      y: 300 + Math.random() * 200,
-      vx: -1,
-      vy: 0,
-    })),
-  ],
+  get agents() {
+    return [
+      // Left group heading right
+      ...Array.from({ length: 80 }, () => ({
+        x: 50 + Math.random() * 200,
+        y: 300 + Math.random() * 200,
+        vx: 1,
+        vy: 0,
+      })),
+      // Right group heading left
+      ...Array.from({ length: 80 }, () => ({
+        x: 950 + Math.random() * 200,
+        y: 300 + Math.random() * 200,
+        vx: -1,
+        vy: 0,
+      })),
+    ];
+  },
   walls: [
     { ax: 0, ay: 280, bx: 1200, by: 280 },
     { ax: 0, ay: 520, bx: 1200, by: 520 },

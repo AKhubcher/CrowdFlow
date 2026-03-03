@@ -24,6 +24,38 @@ export function HeroSection() {
     let h = parent.clientHeight;
     const dpr = window.devicePixelRatio || 1;
 
+    const buildWorld = () => {
+      const wld = createWorld(w, h);
+      // Exits all around the edges — agents flow outward in every direction
+      // Right edge
+      addExit(wld, w - 2, h * 0.05, w - 2, h * 0.25);
+      addExit(wld, w - 2, h * 0.35, w - 2, h * 0.65);
+      addExit(wld, w - 2, h * 0.75, w - 2, h * 0.95);
+      // Left edge
+      addExit(wld, 2, h * 0.05, 2, h * 0.25);
+      addExit(wld, 2, h * 0.35, 2, h * 0.65);
+      addExit(wld, 2, h * 0.75, 2, h * 0.95);
+      // Top edge
+      addExit(wld, w * 0.05, 2, w * 0.3, 2);
+      addExit(wld, w * 0.4, 2, w * 0.6, 2);
+      addExit(wld, w * 0.7, 2, w * 0.95, 2);
+      // Bottom edge
+      addExit(wld, w * 0.05, h - 2, w * 0.3, h - 2);
+      addExit(wld, w * 0.4, h - 2, w * 0.6, h - 2);
+      addExit(wld, w * 0.7, h - 2, w * 0.95, h - 2);
+
+      const count = Math.min(400, Math.floor((w * h) / 2500));
+      for (let i = 0; i < count; i++) {
+        wld.agents.push(createAgent(
+          50 + Math.random() * (w - 100),
+          50 + Math.random() * (h - 100),
+        ));
+      }
+      return { world: wld, engine: new Engine(wld), agentCount: count };
+    };
+
+    let { world, engine, agentCount } = buildWorld();
+
     const resize = () => {
       w = parent.clientWidth;
       h = parent.clientHeight;
@@ -31,38 +63,10 @@ export function HeroSection() {
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
+      ({ world, engine, agentCount } = buildWorld());
     };
     resize();
     window.addEventListener('resize', resize);
-
-    const world = createWorld(w, h);
-    // Exits all around the edges — agents flow outward in every direction
-    // Right edge — multiple segments
-    addExit(world, w - 2, h * 0.05, w - 2, h * 0.25);
-    addExit(world, w - 2, h * 0.35, w - 2, h * 0.65);
-    addExit(world, w - 2, h * 0.75, w - 2, h * 0.95);
-    // Left edge
-    addExit(world, 2, h * 0.05, 2, h * 0.25);
-    addExit(world, 2, h * 0.35, 2, h * 0.65);
-    addExit(world, 2, h * 0.75, 2, h * 0.95);
-    // Top edge
-    addExit(world, w * 0.05, 2, w * 0.3, 2);
-    addExit(world, w * 0.4, 2, w * 0.6, 2);
-    addExit(world, w * 0.7, 2, w * 0.95, 2);
-    // Bottom edge
-    addExit(world, w * 0.05, h - 2, w * 0.3, h - 2);
-    addExit(world, w * 0.4, h - 2, w * 0.6, h - 2);
-    addExit(world, w * 0.7, h - 2, w * 0.95, h - 2);
-
-    const agentCount = Math.min(400, Math.floor((w * h) / 2500));
-    for (let i = 0; i < agentCount; i++) {
-      world.agents.push(createAgent(
-        50 + Math.random() * (w - 100),
-        50 + Math.random() * (h - 100),
-      ));
-    }
-
-    const engine = new Engine(world);
     const ctx = canvas.getContext('2d')!;
 
     // Track mouse for interactive repulsion — listen on parent to catch events above overlays

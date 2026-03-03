@@ -5,10 +5,12 @@ export const concertVenue: PresetScenario = {
   name: 'Concert Venue',
   description: 'Large crowd around a stage with multiple exits and an attractor.',
   icon: '🎵',
-  agents: Array.from({ length: 300 }, () => ({
-    x: 200 + Math.random() * 800,
-    y: 200 + Math.random() * 500,
-  })),
+  get agents() {
+    return Array.from({ length: 300 }, () => ({
+      x: 200 + Math.random() * 800,
+      y: 200 + Math.random() * 500,
+    }));
+  },
   walls: [
     // Venue boundary
     { ax: 50, ay: 50, bx: 1150, by: 50 },

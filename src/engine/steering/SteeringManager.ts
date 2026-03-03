@@ -62,7 +62,7 @@ export class SteeringManager {
     out.x = 0;
     out.y = 0;
 
-    if (agent.state === AgentState.Frozen || agent.state === AgentState.Exiting) {
+    if (agent.state === AgentState.Frozen) {
       return out;
     }
 
@@ -101,7 +101,6 @@ export class SteeringManager {
     wallAvoidance(_wallForce, agent, world.walls);
     hazardAvoidance(_hazardForce, agent, world.hazards);
     attractorPull(_attractForce, agent, world.attractors);
-    noise(_noiseForce, agent);
 
     out.x += _goalForce.x * this.weights.goal;
     out.y += _goalForce.y * this.weights.goal;
@@ -115,8 +114,12 @@ export class SteeringManager {
     out.y += _hazardForce.y * this.weights.hazardAvoidance;
     out.x += _attractForce.x * this.weights.attractorPull;
     out.y += _attractForce.y * this.weights.attractorPull;
-    out.x += _noiseForce.x * this.weights.noise;
-    out.y += _noiseForce.y * this.weights.noise;
+
+    if (this.weights.noise > 0) {
+      noise(_noiseForce, agent);
+      out.x += _noiseForce.x * this.weights.noise;
+      out.y += _noiseForce.y * this.weights.noise;
+    }
 
     V.clampLength(out, out, agent.maxForce);
     return out;

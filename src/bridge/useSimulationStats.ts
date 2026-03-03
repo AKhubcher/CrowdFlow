@@ -19,7 +19,18 @@ export function useSimulationStats(controller: SimulationController | null): Sim
     if (!controller) return;
 
     const interval = setInterval(() => {
-      setStats(controller.getStats());
+      const newStats = controller.getStats();
+      setStats(prev => {
+        if (
+          prev.agentCount === newStats.agentCount &&
+          prev.exitedCount === newStats.exitedCount &&
+          prev.fps === newStats.fps &&
+          prev.tick === newStats.tick
+        ) {
+          return prev; // no change — skip re-render
+        }
+        return newStats;
+      });
     }, STATS_POLL_INTERVAL);
 
     return () => clearInterval(interval);

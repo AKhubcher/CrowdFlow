@@ -72,14 +72,11 @@ export class AgentLayer {
       ctx.globalAlpha = 0.75 + speed * 0.1;
     }
 
-    // Body with subtle gradient feel
-    ctx.shadowColor = agent.color;
-    ctx.shadowBlur = 8 + agent.stress * 6;
+    // Body
     ctx.fillStyle = agent.color;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
 
     // Bright inner core
     ctx.fillStyle = '#ffffff';

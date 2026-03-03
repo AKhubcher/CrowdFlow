@@ -5,10 +5,12 @@ export const maze: PresetScenario = {
   name: 'Maze',
   description: 'Agents navigate through a maze to reach the exit.',
   icon: '🧩',
-  agents: Array.from({ length: 80 }, () => ({
-    x: 60 + Math.random() * 150,
-    y: 60 + Math.random() * 680,
-  })),
+  get agents() {
+    return Array.from({ length: 80 }, () => ({
+      x: 60 + Math.random() * 150,
+      y: 60 + Math.random() * 680,
+    }));
+  },
   walls: [
     // Outer walls
     { ax: 30, ay: 30, bx: 1170, by: 30 },

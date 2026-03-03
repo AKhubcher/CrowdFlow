@@ -127,13 +127,17 @@ export class FlowField {
     }
   }
 
+  private readonly _scratchDir: Vec2 = { x: 0, y: 0 };
+
   getDirection(wx: number, wy: number): Vec2 | null {
     const cx = Math.floor(wx / this.resolution);
     const cy = Math.floor(wy / this.resolution);
     if (cx < 0 || cx >= this.cols || cy < 0 || cy >= this.rows) return null;
     const idx = cy * this.cols + cx;
     if (this.distance[idx] === Infinity) return null;
-    return { x: this.dirX[idx], y: this.dirY[idx] };
+    this._scratchDir.x = this.dirX[idx];
+    this._scratchDir.y = this.dirY[idx];
+    return this._scratchDir;
   }
 
   getDistance(wx: number, wy: number): number {

@@ -12,6 +12,10 @@ export class Heatmap {
     this.enabled = on;
   }
 
+  clear(): void {
+    this.density.fill(0);
+  }
+
   update(world: WorldState): void {
     if (!this.enabled) return;
 

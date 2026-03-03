@@ -88,7 +88,9 @@ export class Renderer {
     // Layer 2: Agents
     this.agentLayer.render(agentCtx, world, this.camera, w, h);
 
-    // Layer 3: UI overlay
+    // Layer 3: UI overlay — shared canvas, clear once then render both
+    uiCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    uiCtx.clearRect(0, 0, w, h);
     this.overlayLayer.render(uiCtx, world, this.camera, w, h);
     this.uiLayer.render(uiCtx, this.camera, w, h);
   }

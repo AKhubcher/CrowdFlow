@@ -55,7 +55,8 @@ export default function SimulatorPage() {
   const locationPresetId = (location.state as { presetId?: string })?.presetId;
   const initialPreset = useMemo(() => getInitialPreset(locationPresetId), [locationPresetId]);
 
-  const { controller, reset } = useSimulation(buildWorldFromPreset(initialPreset));
+  const initialWorld = useMemo(() => buildWorldFromPreset(initialPreset), [initialPreset]);
+  const { controller, reset } = useSimulation(initialWorld);
   const stats = useSimulationStats(controller);
   const snapshotMgr = useRef(new SnapshotManager());
 
@@ -70,6 +71,7 @@ export default function SimulatorPage() {
   const [snapshotIndex, setSnapshotIndex] = useState(0);
   const [weights, setWeights] = useState<SteeringWeights>(() => controller ? { ...controller.engine.steering.weights } : { goal: 1, separation: 2.5, alignment: 0.3, wallAvoidance: 3, hazardAvoidance: 4, attractorPull: 0.5, noise: 0 });
   const [maxSpeed, setMaxSpeed] = useState(2.0);
+  const [resetKey, setResetKey] = useState(0);
 
   // Resizable panel
   const [panelWidth, setPanelWidth] = useState(() => {
@@ -144,6 +146,7 @@ export default function SimulatorPage() {
     const world = controller.getWorld();
     const sessions = loadSessions();
     const preset = presets.find(p => p.id === activePreset);
+    const s = latestStats.current;
     const session: SimulationSession = {
       id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
       presetName: preset?.name || activePreset,
@@ -152,21 +155,21 @@ export default function SimulatorPage() {
       endTime: now,
       durationMs: now - sessionStart.current,
       initialAgents: initialAgentCount.current,
-      agentsExited: stats.exitedCount,
+      agentsExited: s.exitedCount,
       agentsRemaining: world.agents.length,
       peakStress: peakStress.current,
       averageStress: stressSamples.current > 0 ? stressSum.current / stressSamples.current : 0,
       averageFps: fpsSamples.current > 0 ? fpsSum.current / fpsSamples.current : 0,
       totalTicks: world.tick,
       panicModeUsed: panicMode,
-      evacuationComplete: world.agents.length === 0 && stats.exitedCount > 0,
+      evacuationComplete: world.agents.length === 0 && s.exitedCount > 0,
     };
     if (session.durationMs > 2000 && session.initialAgents > 0) {
       sessions.push(session);
       saveSessions(sessions);
     }
     sessionStart.current = 0;
-  }, [controller, activePreset, stats, panicMode]);
+  }, [controller, activePreset, panicMode]);
 
   // Track peak stress and FPS during playback
   useEffect(() => {
@@ -182,11 +185,11 @@ export default function SimulatorPage() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // Snapshot capture interval
+  // Snapshot capture interval — capture at real-time interval regardless of speed
   useEffect(() => {
     if (!isPlaying || !controller) return;
     const interval = setInterval(() => {
-      snapshotMgr.current.capture(controller.getWorld());
+      snapshotMgr.current.captureForced(controller.getWorld());
       setSnapshotCount(snapshotMgr.current.getCount());
       setSnapshotIndex(snapshotMgr.current.getCount() - 1);
     }, 1000);
@@ -224,13 +227,15 @@ export default function SimulatorPage() {
     saveCurrentSession();
     setIsPlaying(false);
     setPanicMode(false);
-    const preset = presets.find(p => p.id === activePreset);
+    const preset = presets.find(p => p.id === activePreset)
+      ?? loadCustomScenarios().find(s => s.id === activePreset);
     if (preset) {
       reset(buildWorldFromPreset(preset));
     }
     snapshotMgr.current.clear();
     setSnapshotCount(0);
     setSnapshotIndex(0);
+    setResetKey(k => k + 1);
     sessionStart.current = 0;
   }, [controller, reset, activePreset, saveCurrentSession]);
 
@@ -250,6 +255,7 @@ export default function SimulatorPage() {
     snapshotMgr.current.clear();
     setSnapshotCount(0);
     setSnapshotIndex(0);
+    setResetKey(k => k + 1);
     sessionStart.current = 0;
   }, [controller, reset, saveCurrentSession]);
 
@@ -286,9 +292,11 @@ export default function SimulatorPage() {
     for (let i = 0; i < count; i++) {
       const x = 50 + Math.random() * (world.width - 100);
       const y = 50 + Math.random() * (world.height - 100);
-      world.agents.push(createAgent(x, y));
+      const agent = createAgent(x, y);
+      agent.maxSpeed = maxSpeed;
+      world.agents.push(agent);
     }
-  }, [controller]);
+  }, [controller, maxSpeed]);
 
   const handleClearAgents = useCallback(() => {
     if (!controller) return;
@@ -384,7 +392,7 @@ export default function SimulatorPage() {
             <span className={isPlaying ? 'text-emerald-400/70' : 'text-white/30'}>{isPlaying ? 'Running' : 'Paused'}</span>
           </div>
           <div className="mx-4 flex-1">
-            <AnalyticsOverlay stats={stats} isPlaying={isPlaying} />
+            <AnalyticsOverlay stats={stats} isPlaying={isPlaying} resetKey={resetKey} />
           </div>
           <div className="flex items-center gap-5">
             <Link to="/scenarios" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
@@ -406,7 +414,7 @@ export default function SimulatorPage() {
       {/* Main content */}
       <div ref={containerRef} className="flex-1 flex min-h-0">
         <div className="flex-1 relative">
-          <SimCanvas controller={controller} mode={mode} />
+          <SimCanvas controller={controller} mode={mode} maxSpeed={maxSpeed} />
           {/* Mode indicator */}
           <div className="absolute bottom-3 left-3 bg-surface-950/60 backdrop-blur-xl rounded-lg px-3 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[10px] uppercase tracking-widest text-white/25 font-medium">

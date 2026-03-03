@@ -15,8 +15,14 @@ export class EnvironmentLayer {
   /** Call every frame to advance pulse animations and trigger redraws */
   tick(): void {
     this.animTime = performance.now() / 1000;
-    // Continuously redraw when hazards or exits exist (for pulse)
-    if (this.animating) this.dirty = true;
+    // Throttle animation redraws to ~15fps for pulse effects
+    if (this.animating) {
+      const now = performance.now();
+      if (now - this.lastAnimFrame >= 67) {
+        this.lastAnimFrame = now;
+        this.dirty = true;
+      }
+    }
   }
 
   setAnimating(hasHazardsOrExits: boolean): void {
@@ -203,13 +209,22 @@ export class EnvironmentLayer {
       ctx.lineTo(exit.bx, exit.by);
       ctx.stroke();
 
-      // Exit arrows (perpendicular)
+      // Exit arrows (perpendicular, pointing outward from world center)
       const dx = exit.bx - exit.ax;
       const dy = exit.by - exit.ay;
       const len = Math.sqrt(dx * dx + dy * dy);
       if (len > 1) {
-        const nx = -dy / len;
-        const ny = dx / len;
+        let nx = -dy / len;
+        let ny = dx / len;
+        // Ensure arrows point away from world center
+        const emx = (exit.ax + exit.bx) / 2;
+        const emy = (exit.ay + exit.by) / 2;
+        const toCenterX = world.width / 2 - emx;
+        const toCenterY = world.height / 2 - emy;
+        if (nx * toCenterX + ny * toCenterY > 0) {
+          nx = -nx;
+          ny = -ny;
+        }
         const mx = (exit.ax + exit.bx) / 2;
         const my = (exit.ay + exit.by) / 2;
         ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';

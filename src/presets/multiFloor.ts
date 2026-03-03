@@ -5,15 +5,17 @@ export const multiFloor: PresetScenario = {
   name: 'Multi-Floor Building',
   description: 'Simulates a multi-room building layout with corridors.',
   icon: '🏢',
-  agents: Array.from({ length: 120 }, (_, i) => {
-    const room = i % 4;
-    const baseX = (room % 2) * 550 + 100;
-    const baseY = Math.floor(room / 2) * 350 + 100;
-    return {
-      x: baseX + Math.random() * 400,
-      y: baseY + Math.random() * 200,
-    };
-  }),
+  get agents() {
+    return Array.from({ length: 120 }, (_, i) => {
+      const room = i % 4;
+      const baseX = (room % 2) * 550 + 100;
+      const baseY = Math.floor(room / 2) * 350 + 100;
+      return {
+        x: baseX + Math.random() * 400,
+        y: baseY + Math.random() * 200,
+      };
+    });
+  },
   walls: [
     // Outer walls
     { ax: 50, ay: 50, bx: 1150, by: 50 },

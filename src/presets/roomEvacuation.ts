@@ -5,10 +5,12 @@ export const roomEvacuation: PresetScenario = {
   name: 'Room Evacuation',
   description: 'A room full of agents evacuating through two exits.',
   icon: '🏃',
-  agents: Array.from({ length: 200 }, () => ({
-    x: 100 + Math.random() * 1000,
-    y: 100 + Math.random() * 600,
-  })),
+  get agents() {
+    return Array.from({ length: 200 }, () => ({
+      x: 100 + Math.random() * 1000,
+      y: 100 + Math.random() * 600,
+    }));
+  },
   walls: [
     { ax: 50, ay: 50, bx: 1150, by: 50 },
     { ax: 1150, ay: 50, bx: 1150, by: 750 },

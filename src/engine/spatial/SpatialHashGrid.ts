@@ -47,7 +47,13 @@ export class SpatialHashGrid {
     this.insertAll(agents);
   }
 
-  queryRadius(x: number, y: number, radius: number, exclude?: AgentData): AgentData[] {
+  /**
+   * Query all agents within `radius` of (x, y).
+   * WARNING: Returns a shared internal array that is overwritten on every call.
+   * Callers must consume the result before the next queryRadius call.
+   * Pass `copy = true` if you need to store the result.
+   */
+  queryRadius(x: number, y: number, radius: number, exclude?: AgentData, copy = false): AgentData[] {
     const results = this._reusableResults;
     results.length = 0;
 
@@ -73,6 +79,6 @@ export class SpatialHashGrid {
       }
     }
 
-    return results;
+    return copy ? results.slice() : results;
   }
 }

@@ -9,9 +9,10 @@ const SPARKLINE_HEIGHT = 24;
 interface AnalyticsOverlayProps {
   stats: SimulationStats;
   isPlaying: boolean;
+  resetKey: number;
 }
 
-export function AnalyticsOverlay({ stats, isPlaying }: AnalyticsOverlayProps) {
+export function AnalyticsOverlay({ stats, isPlaying, resetKey }: AnalyticsOverlayProps) {
   const [elapsed, setElapsed] = useState(0);
   const startRef = useRef(0);
 
@@ -19,6 +20,19 @@ export function AnalyticsOverlay({ stats, isPlaying }: AnalyticsOverlayProps) {
   const evacDataRef = useRef<number[]>([]);
   const lastSampleTimeRef = useRef(0);
   const [evacPoints, setEvacPoints] = useState<string>('');
+
+  // Use a ref for stats so the sparkline interval doesn't need it as a dep
+  const statsRef = useRef(stats);
+  statsRef.current = stats;
+
+  // Reset all state when simulation is reset
+  useEffect(() => {
+    setElapsed(0);
+    startRef.current = 0;
+    evacDataRef.current = [];
+    lastSampleTimeRef.current = 0;
+    setEvacPoints('');
+  }, [resetKey]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -35,20 +49,16 @@ export function AnalyticsOverlay({ stats, isPlaying }: AnalyticsOverlayProps) {
     if (!isPlaying) return;
 
     const sampleInterval = setInterval(() => {
-      const now = Date.now();
-      if (now - lastSampleTimeRef.current >= SPARKLINE_SAMPLE_INTERVAL) {
-        lastSampleTimeRef.current = now;
-        const data = evacDataRef.current;
-        data.push(stats.exitedCount);
-        if (data.length > SPARKLINE_MAX_POINTS) {
-          data.shift();
-        }
-        setEvacPoints(buildPolylinePoints(data));
+      const data = evacDataRef.current;
+      data.push(statsRef.current.exitedCount);
+      if (data.length > SPARKLINE_MAX_POINTS) {
+        data.shift();
       }
+      setEvacPoints(buildPolylinePoints(data));
     }, SPARKLINE_SAMPLE_INTERVAL);
 
     return () => clearInterval(sampleInterval);
-  }, [isPlaying, stats.exitedCount]);
+  }, [isPlaying]);
 
   const fmtTime = (ms: number) => {
     const s = Math.floor(ms / 1000);

@@ -35,12 +35,7 @@ export class OverlayLayer {
   }
 
   render(ctx: CanvasRenderingContext2D, world: WorldState, camera: Camera, w: number, h: number): void {
-    if (!this.dirty) return;
-    this.dirty = false;
-
-    const dpr = camera.dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
+    // Canvas is cleared by Renderer — always redraw
     camera.apply(ctx, w, h);
 
     // Selection box

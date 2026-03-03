@@ -99,6 +99,8 @@ export class SimulationController {
     this.accumulator = 0;
     this.fitCameraToWorld();
     this.renderer.environmentLayer.forceRedraw();
+    this.renderer.heatmap.clear();
+    this.renderer.trails.clear();
     this.renderer.render(this.engine.world, this.engine.flowField);
   }
 

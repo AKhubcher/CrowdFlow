@@ -3,6 +3,9 @@ import { Camera } from '../camera/Camera';
 
 export class BottleneckLayer {
   private enabled = false;
+  private counts: Float32Array | null = null;
+  private speedSums: Float32Array | null = null;
+  private cachedSize = 0;
 
   setEnabled(on: boolean): void {
     this.enabled = on;
@@ -16,9 +19,18 @@ export class BottleneckLayer {
     const cellSize = 20;
     const cols = Math.ceil(world.width / cellSize);
     const rows = Math.ceil(world.height / cellSize);
-    // Per-cell: count of agents, sum of speeds
-    const counts = new Float32Array(cols * rows);
-    const speedSums = new Float32Array(cols * rows);
+    const size = cols * rows;
+
+    // Cache typed arrays, reallocate only when grid size changes
+    if (size !== this.cachedSize) {
+      this.counts = new Float32Array(size);
+      this.speedSums = new Float32Array(size);
+      this.cachedSize = size;
+    }
+    const counts = this.counts!;
+    const speedSums = this.speedSums!;
+    counts.fill(0);
+    speedSums.fill(0);
 
     for (const agent of world.agents) {
       const cx = Math.floor(agent.position.x / cellSize);

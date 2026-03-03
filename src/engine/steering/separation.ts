@@ -36,17 +36,12 @@ export function separation(out: Vec2, agent: AgentData, grid: SpatialHashGrid, p
   out.y /= neighbors.length;
 
   // Scale to maxSpeed then subtract velocity for steering
+  // No per-behavior clamp — the total force is clamped in SteeringManager
+  // so the weight slider can scale the raw force across its full range.
   const len = Math.sqrt(out.x * out.x + out.y * out.y);
   if (len > 0.0001) {
     out.x = (out.x / len) * agent.maxSpeed - agent.velocity.x;
     out.y = (out.y / len) * agent.maxSpeed - agent.velocity.y;
-    // Clamp
-    const steerLen = Math.sqrt(out.x * out.x + out.y * out.y);
-    if (steerLen > agent.maxForce) {
-      const s = agent.maxForce / steerLen;
-      out.x *= s;
-      out.y *= s;
-    }
   }
 
   return out;

@@ -22,6 +22,7 @@ export default function DashboardPage() {
   }, []);
 
   const handleClear = () => {
+    if (!window.confirm('Clear all session data? This cannot be undone.')) return;
     clearSessions();
     setSessions([]);
   };

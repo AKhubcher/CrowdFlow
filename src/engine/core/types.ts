@@ -6,8 +6,6 @@ export interface Vec2 {
 export const enum AgentState {
   Idle = 0,
   Moving = 1,
-  Exiting = 2,
-  Panicked = 3,
   Frozen = 4,
   Lingering = 5,
 }

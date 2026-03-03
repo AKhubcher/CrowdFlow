@@ -25,9 +25,10 @@ type DragTarget =
 interface SimCanvasProps {
   controller: SimulationController;
   mode: InteractionMode;
+  maxSpeed: number;
 }
 
-export function SimCanvas({ controller, mode }: SimCanvasProps) {
+export function SimCanvas({ controller, mode, maxSpeed }: SimCanvasProps) {
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const isPanning = useRef(false);
@@ -388,7 +389,9 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     dragStart.current = worldPos;
 
     if (mode === 'addAgent') {
-      controller.getWorld().agents.push(createAgent(worldPos.x, worldPos.y));
+      const agent = createAgent(worldPos.x, worldPos.y);
+      agent.maxSpeed = maxSpeed;
+      controller.getWorld().agents.push(agent);
       controller.renderOnce();
     } else if (mode === 'addHazard') {
       addHazard(controller.getWorld(), worldPos.x, worldPos.y, 40, 1);
@@ -438,11 +441,13 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       } else if (t.type === 'exitA') {
         t.exit.ax = worldPos.x;
         t.exit.ay = worldPos.y;
+        t.exit.width = Math.sqrt((t.exit.bx - t.exit.ax) ** 2 + (t.exit.by - t.exit.ay) ** 2);
         controller.renderer.environmentLayer.forceRedraw();
         controller.engine.flowField.markDirty();
       } else if (t.type === 'exitB') {
         t.exit.bx = worldPos.x;
         t.exit.by = worldPos.y;
+        t.exit.width = Math.sqrt((t.exit.bx - t.exit.ax) ** 2 + (t.exit.by - t.exit.ay) ** 2);
         controller.renderer.environmentLayer.forceRedraw();
         controller.engine.flowField.markDirty();
       }
@@ -462,7 +467,9 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
         controller.renderOnce();
       } else if (mode === 'addAgent') {
         if (Math.random() < 0.3) {
-          controller.getWorld().agents.push(createAgent(worldPos.x, worldPos.y));
+          const agent = createAgent(worldPos.x, worldPos.y);
+          agent.maxSpeed = maxSpeed;
+          controller.getWorld().agents.push(agent);
         }
         controller.renderOnce();
       } else if (mode === 'erase') {
@@ -540,7 +547,15 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
-      onMouseLeave={() => { dragging.current = false; isPanning.current = false; dragTarget.current = null; }}
+      onMouseLeave={() => {
+        dragging.current = false;
+        isPanning.current = false;
+        dragTarget.current = null;
+        controller.renderer.uiLayer.setWallPreview(null);
+        controller.renderer.overlayLayer.setCursor(null, '');
+        controller.renderer.overlayLayer.setSelection(null, null);
+        controller.renderOnce();
+      }}
       onWheel={onWheel}
       onContextMenu={e => e.preventDefault()}
     >
