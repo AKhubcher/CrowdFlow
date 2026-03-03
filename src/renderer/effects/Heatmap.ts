@@ -50,10 +50,24 @@ export class Heatmap {
       for (let x = 0; x < gridW; x++) {
         const val = Math.min(density[y * gridW + x], 5) / 5;
         if (val < 0.05) continue;
-        const r = Math.floor(255 * val);
-        const g = Math.floor(100 * (1 - val));
-        const b = 50;
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${val * 0.5})`;
+
+        // Cool-to-hot gradient: blue → cyan → yellow → orange → red
+        let r: number, g: number, b: number;
+        if (val < 0.25) {
+          const t = val / 0.25;
+          r = 0; g = Math.floor(80 * t); b = Math.floor(200 * (1 - t * 0.3));
+        } else if (val < 0.5) {
+          const t = (val - 0.25) / 0.25;
+          r = Math.floor(200 * t); g = Math.floor(180 + 75 * t); b = Math.floor(140 * (1 - t));
+        } else if (val < 0.75) {
+          const t = (val - 0.5) / 0.25;
+          r = Math.floor(200 + 55 * t); g = Math.floor(180 * (1 - t * 0.5)); b = 0;
+        } else {
+          const t = (val - 0.75) / 0.25;
+          r = 255; g = Math.floor(90 * (1 - t)); b = Math.floor(30 * t);
+        }
+
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${val * 0.4})`;
         ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
       }
     }

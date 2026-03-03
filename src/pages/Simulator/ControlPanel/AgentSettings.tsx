@@ -6,17 +6,17 @@ interface AgentSettingsProps {
 
 export function AgentSettings({ agentCount, onSpawnBatch, onClearAgents }: AgentSettingsProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[10px] text-white/40 uppercase tracking-wider">Agents</span>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-white/60 font-mono">{agentCount} active</span>
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-white/30 uppercase tracking-widest font-medium">Agents</span>
+        <span className="text-xs text-white/50 font-mono">{agentCount}</span>
       </div>
-      <div className="flex gap-1">
+      <div className="grid grid-cols-4 gap-1.5">
         {[10, 50, 100, 500].map(n => (
           <button
             key={n}
             onClick={() => onSpawnBatch(n)}
-            className="flex-1 h-7 rounded text-[11px] font-mono bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70 transition-colors"
+            className="h-8 rounded-lg text-[11px] font-mono bg-white/[0.03] text-white/40 hover:bg-cyan-500/10 hover:text-cyan-400 transition-all"
           >
             +{n}
           </button>
@@ -24,9 +24,9 @@ export function AgentSettings({ agentCount, onSpawnBatch, onClearAgents }: Agent
       </div>
       <button
         onClick={onClearAgents}
-        className="h-7 rounded-lg text-[11px] bg-red-500/10 text-red-400/70 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+        className="h-8 rounded-lg text-[11px] font-medium bg-white/[0.02] text-white/25 hover:bg-red-500/10 hover:text-red-400 transition-all"
       >
-        Clear All Agents
+        Clear All
       </button>
     </div>
   );

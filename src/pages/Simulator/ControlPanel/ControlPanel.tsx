@@ -31,13 +31,13 @@ interface ControlPanelProps {
 
 export function ControlPanel(props: ControlPanelProps) {
   return (
-    <div className="w-64 flex-shrink-0 h-full overflow-y-auto glass-strong rounded-xl p-4 flex flex-col gap-4">
-      {/* Stats bar */}
+    <div className="w-72 flex-shrink-0 h-full overflow-y-auto bg-surface-950/80 backdrop-blur-xl border-l border-white/[0.04] p-4 flex flex-col gap-4">
+      {/* Stats dashboard */}
       <div className="grid grid-cols-2 gap-2">
-        <StatBadge label="Agents" value={props.stats.agentCount} />
-        <StatBadge label="Exited" value={props.stats.exitedCount} />
-        <StatBadge label="FPS" value={props.stats.fps} highlight={props.stats.fps < 30} />
-        <StatBadge label="Stress" value={`${(props.stats.averageStress * 100).toFixed(0)}%`} />
+        <StatBadge label="Agents" value={props.stats.agentCount} gradient="from-cyan-500/20 to-cyan-500/5" />
+        <StatBadge label="Exited" value={props.stats.exitedCount} gradient="from-emerald-500/20 to-emerald-500/5" />
+        <StatBadge label="FPS" value={props.stats.fps} highlight={props.stats.fps < 30} gradient="from-blue-500/20 to-blue-500/5" />
+        <StatBadge label="Stress" value={`${(props.stats.averageStress * 100).toFixed(0)}%`} highlight={props.stats.averageStress > 0.5} gradient="from-orange-500/20 to-orange-500/5" />
       </div>
 
       <Divider />
@@ -82,11 +82,13 @@ export function ControlPanel(props: ControlPanelProps) {
   );
 }
 
-function StatBadge({ label, value, highlight = false }: { label: string; value: string | number; highlight?: boolean }) {
+function StatBadge({ label, value, highlight = false, gradient }: {
+  label: string; value: string | number; highlight?: boolean; gradient: string;
+}) {
   return (
-    <div className="bg-white/[0.03] rounded-lg px-2.5 py-1.5">
-      <div className="text-[9px] text-white/30 uppercase tracking-wider">{label}</div>
-      <div className={`text-sm font-mono font-medium ${highlight ? 'text-red-400' : 'text-white/80'}`}>
+    <div className={`relative overflow-hidden rounded-xl px-3 py-2 border border-white/[0.04] bg-gradient-to-br ${gradient}`}>
+      <div className="text-[9px] text-white/30 uppercase tracking-widest font-medium">{label}</div>
+      <div className={`text-lg font-mono font-bold leading-tight ${highlight ? 'text-red-400' : 'text-white/80'}`}>
         {value}
       </div>
     </div>

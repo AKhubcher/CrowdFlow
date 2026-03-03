@@ -170,43 +170,51 @@ export default function SimulatorPage() {
 
   if (!controller) return null;
 
+  const modeLabels: Record<InteractionMode, string> = {
+    select: 'Select',
+    addAgent: 'Place Agents',
+    addWall: 'Draw Wall',
+    addExit: 'Draw Exit',
+    addHazard: 'Place Hazard',
+    addAttractor: 'Place Attractor',
+    erase: 'Erase',
+  };
+
   return (
     <div className="h-screen flex flex-col bg-surface-950">
       {/* Top bar */}
-      <div className="h-12 flex items-center px-4 border-b border-white/[0.06] bg-surface-950/90 backdrop-blur-xl flex-shrink-0">
+      <div className="h-11 flex items-center px-4 border-b border-white/[0.04] bg-surface-950/90 backdrop-blur-xl flex-shrink-0">
         <Link to="/" className="text-sm font-bold text-gradient mr-3 hover:opacity-80 transition-opacity">CrowdFlow</Link>
-        <div className="w-px h-5 bg-white/10 mr-3" />
-        <div className="flex items-center gap-1.5 text-xs text-white/40">
-          <div className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-accent-green animate-pulse' : 'bg-white/20'}`} />
-          <span>{isPlaying ? 'Running' : 'Paused'}</span>
-          <span className="text-white/15 mx-1">|</span>
-          <span className="font-mono text-white/30">{stats.agentCount} agents</span>
+        <div className="w-px h-4 bg-white/[0.06] mr-3" />
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <div className={`w-1.5 h-1.5 rounded-full transition-colors ${isPlaying ? 'bg-emerald-400' : 'bg-white/20'}`} />
+          <span className={isPlaying ? 'text-emerald-400/70' : 'text-white/30'}>{isPlaying ? 'Running' : 'Paused'}</span>
         </div>
-        <div className="ml-auto flex items-center gap-4">
-          <Link to="/how-it-works" className="text-xs text-white/30 hover:text-accent-cyan transition-colors">
+        <div className="ml-auto flex items-center gap-5">
+          <Link to="/how-it-works" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
             How It Works
           </Link>
-          <Link to="/about" className="text-xs text-white/30 hover:text-accent-cyan transition-colors">
+          <Link to="/about" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
             About
           </Link>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex gap-0 min-h-0">
+      <div className="flex-1 flex min-h-0">
         <div className="flex-1 relative">
           <SimCanvas controller={controller} mode={mode} />
           <AnalyticsOverlay stats={stats} />
           {/* Mode indicator */}
-          <div className="absolute bottom-3 left-3 glass rounded-lg px-3 py-1.5 pointer-events-none">
-            <span className="text-[10px] uppercase tracking-wider text-white/30">
-              {mode === 'select' ? 'Select' :
-               mode === 'addAgent' ? 'Place Agents' :
-               mode === 'addWall' ? 'Draw Wall (drag)' :
-               mode === 'addExit' ? 'Draw Exit (drag)' :
-               mode === 'addHazard' ? 'Place Hazard' :
-               mode === 'addAttractor' ? 'Place Attractor' :
-               'Erase'}
+          <div className="absolute bottom-3 left-3 bg-surface-950/60 backdrop-blur-xl rounded-lg px-3 py-1.5 border border-white/[0.04] pointer-events-none">
+            <span className="text-[10px] uppercase tracking-widest text-white/25 font-medium">
+              {modeLabels[mode]}
+            </span>
+          </div>
+          {/* Keyboard hints */}
+          <div className="absolute bottom-3 right-3 bg-surface-950/40 backdrop-blur-xl rounded-lg px-2.5 py-1.5 border border-white/[0.04] pointer-events-none">
+            <span className="text-[9px] text-white/15 font-mono">
+              Space: Play/Pause | Scroll: Zoom | RMB: Pan
             </span>
           </div>
         </div>

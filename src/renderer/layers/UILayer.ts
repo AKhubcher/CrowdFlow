@@ -19,15 +19,43 @@ export class UILayer {
 
     if (this.wallPreview) {
       const { ax, ay, bx, by } = this.wallPreview;
-      ctx.strokeStyle = 'rgba(100, 116, 139, 0.6)';
+
+      // Ghost line with glow
+      ctx.shadowColor = 'rgba(148, 163, 184, 0.5)';
+      ctx.shadowBlur = 6;
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
       ctx.lineWidth = 4;
-      ctx.setLineDash([6, 4]);
+      ctx.setLineDash([8, 4]);
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(ax, ay);
       ctx.lineTo(bx, by);
       ctx.stroke();
+      ctx.shadowBlur = 0;
       ctx.setLineDash([]);
+
+      // Endpoints
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+      ctx.beginPath();
+      ctx.arc(ax, ay, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(bx, by, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Length indicator
+      const dx = bx - ax;
+      const dy = by - ay;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len > 20) {
+        const mx = (ax + bx) / 2;
+        const my = (ay + by) / 2;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(`${Math.round(len)}px`, mx, my - 6);
+      }
     }
   }
 

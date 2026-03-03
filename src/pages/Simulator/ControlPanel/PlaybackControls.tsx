@@ -17,7 +17,11 @@ export function PlaybackControls({
       <div className="flex items-center gap-2">
         <button
           onClick={onTogglePlay}
-          className="flex-1 h-9 rounded-lg bg-accent-cyan/20 hover:bg-accent-cyan/30 text-accent-cyan font-medium text-sm transition-colors flex items-center justify-center gap-2"
+          className={`flex-1 h-10 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+            isPlaying
+              ? 'bg-white/10 text-white/80 hover:bg-white/15'
+              : 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 hover:from-cyan-500/30 hover:to-blue-500/30 ring-1 ring-cyan-500/20'
+          }`}
         >
           {isPlaying ? (
             <><PauseIcon /> Pause</>
@@ -28,30 +32,30 @@ export function PlaybackControls({
         <button
           onClick={onStepForward}
           disabled={isPlaying}
-          className="h-9 w-9 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 disabled:opacity-30 transition-colors flex items-center justify-center"
+          className="h-10 w-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/50 disabled:opacity-20 transition-all flex items-center justify-center"
           title="Step forward (.)"
         >
           <StepIcon />
         </button>
         <button
           onClick={onReset}
-          className="h-9 w-9 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 transition-colors flex items-center justify-center"
+          className="h-10 w-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/50 transition-all flex items-center justify-center"
           title="Reset (R)"
         >
           <ResetIcon />
         </button>
       </div>
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] text-white/40 uppercase tracking-wider w-10">Speed</span>
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-white/30 uppercase tracking-widest w-10 font-medium">Speed</span>
         <div className="flex gap-1 flex-1">
           {speeds.map(s => (
             <button
               key={s}
               onClick={() => onSpeedChange(s)}
-              className={`flex-1 h-6 rounded text-[11px] font-mono transition-colors ${
+              className={`flex-1 h-7 rounded-lg text-[11px] font-mono transition-all ${
                 speed === s
-                  ? 'bg-accent-cyan/20 text-accent-cyan'
-                  : 'bg-white/5 text-white/40 hover:bg-white/10'
+                  ? 'bg-cyan-500/15 text-cyan-400 ring-1 ring-cyan-500/20'
+                  : 'bg-white/[0.03] text-white/30 hover:bg-white/[0.06] hover:text-white/50'
               }`}
             >
               {s}x
