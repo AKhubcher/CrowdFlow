@@ -395,7 +395,7 @@ export default function SimulatorPage() {
           {/* Keyboard hints */}
           <div className="absolute bottom-3 right-3 bg-surface-950/40 backdrop-blur-xl rounded-lg px-2.5 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[9px] text-white/15 font-mono">
-              Space: Play/Pause | Scroll: Zoom | RMB: Pan | Shift+Corner: Resize | Del: Delete | Ctrl+C/V: Copy/Paste
+              Space: Play/Pause | Scroll: Zoom | RMB: Pan | Del: Delete | Ctrl+C/V: Copy/Paste
             </span>
           </div>
         </div>

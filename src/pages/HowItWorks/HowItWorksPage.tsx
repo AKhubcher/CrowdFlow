@@ -94,7 +94,6 @@ export default function HowItWorksPage() {
                 { key: 'Del', action: 'Delete selection' },
                 { key: 'Ctrl+C', action: 'Copy selection' },
                 { key: 'Ctrl+V', action: 'Paste' },
-                { key: 'Shift+Drag', action: 'Resize world' },
               ].map(({ key, action }) => (
                 <div key={key} className="flex items-center gap-2.5">
                   <kbd className="px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-[11px] font-mono text-white/40 min-w-[2.5rem] text-center">
