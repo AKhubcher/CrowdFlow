@@ -84,14 +84,14 @@ export default function DashboardPage() {
     <PageLayout>
       <Section>
         <div className="mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.06] mb-6">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[11px] text-white/30 uppercase tracking-widest">Live Data</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] text-emerald-400/80 uppercase tracking-widest">Live Data</span>
           </div>
           <h1 className="text-6xl font-black mb-5 tracking-tight">
             Simulation <span className="text-gradient">Dashboard</span>
           </h1>
-          <p className="text-white/35 text-lg font-light max-w-2xl">
+          <p className="text-white/50 text-lg font-light max-w-2xl">
             Real performance data from your simulation runs. Every metric here comes from
             actual sessions — no premade data.
           </p>
@@ -105,8 +105,8 @@ export default function DashboardPage() {
                 <path d="M7 16l4-8 4 4 4-6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-white/40 mb-3">No sessions recorded yet</h2>
-            <p className="text-sm text-white/25 mb-8 max-w-md mx-auto">
+            <h2 className="text-xl font-bold text-white/60 mb-3">No sessions recorded yet</h2>
+            <p className="text-sm text-white/40 mb-8 max-w-md mx-auto">
               Run a simulation in the Simulator page — press Play, let it run for a few seconds,
               then Pause or Reset. Your session data will appear here automatically.
             </p>
@@ -121,27 +121,27 @@ export default function DashboardPage() {
           <>
             {/* Overview stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-              <BigStat label="Total Runs" value={totalRuns} color="from-cyan-500/10" />
-              <BigStat label="Agents Evacuated" value={totalExited.toLocaleString()} color="from-emerald-500/10" />
-              <BigStat label="Evacuation Rate" value={`${avgEvacRate}%`} color="from-blue-500/10" />
-              <BigStat label="Avg FPS" value={avgFps} color="from-purple-500/10" />
+              <BigStat label="Total Runs" value={totalRuns} color="from-cyan-500/20" accent="text-cyan-400" />
+              <BigStat label="Agents Evacuated" value={totalExited.toLocaleString()} color="from-emerald-500/20" accent="text-emerald-400" />
+              <BigStat label="Evacuation Rate" value={`${avgEvacRate}%`} color="from-blue-500/20" accent="text-blue-400" />
+              <BigStat label="Avg FPS" value={avgFps} color="from-purple-500/20" accent="text-purple-400" />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-              <BigStat label="Completed Evacuations" value={completedRuns} color="from-emerald-500/10" />
-              <BigStat label="Total Sim Time" value={formatDuration(totalTimeMs)} color="from-orange-500/10" />
-              <BigStat label="Avg Stress" value={`${avgStress}%`} color="from-red-500/10" />
-              <BigStat label="Total Agents Spawned" value={totalSimulated.toLocaleString()} color="from-cyan-500/10" />
+              <BigStat label="Completed Evacuations" value={completedRuns} color="from-emerald-500/20" accent="text-emerald-400" />
+              <BigStat label="Total Sim Time" value={formatDuration(totalTimeMs)} color="from-orange-500/20" accent="text-orange-400" />
+              <BigStat label="Avg Stress" value={`${avgStress}%`} color="from-red-500/20" accent="text-red-400" />
+              <BigStat label="Total Agents Spawned" value={totalSimulated.toLocaleString()} color="from-cyan-500/20" accent="text-cyan-400" />
             </div>
 
             {/* Per-scenario breakdown */}
             <div className="mb-10">
-              <h2 className="text-lg font-bold text-white/60 mb-4">By Scenario</h2>
+              <h2 className="text-lg font-bold text-white/80 mb-4">By Scenario</h2>
               <div className="grid md:grid-cols-3 gap-4">
                 {getScenarioBreakdown(sessions).map(s => (
-                  <div key={s.presetId} className="rounded-2xl border border-white/[0.04] bg-gradient-to-br from-white/[0.02] to-transparent p-5">
+                  <div key={s.presetId} className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.05] to-transparent p-5 hover:border-white/[0.12] transition-colors">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-semibold text-white/60">{s.presetName}</span>
-                      <span className="text-[10px] text-white/20 font-mono">{s.runs} runs</span>
+                      <span className="text-sm font-semibold text-white/80">{s.presetName}</span>
+                      <span className="text-[10px] text-cyan-400/60 font-mono">{s.runs} runs</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <MiniStat label="Evacuation Rate" value={`${s.evacuationRate.toFixed(0)}%`} />
@@ -149,9 +149,9 @@ export default function DashboardPage() {
                       <MiniStat label="Peak Stress" value={`${(s.avgPeakStress * 100).toFixed(0)}%`} />
                       <MiniStat label="Avg FPS" value={s.avgFps.toFixed(0)} />
                     </div>
-                    <div className="mt-3 h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+                    <div className="mt-3 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-cyan-500/50 to-emerald-500/50"
+                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400"
                         style={{ width: `${Math.min(100, s.evacuationRate)}%` }}
                       />
                     </div>
@@ -163,13 +163,13 @@ export default function DashboardPage() {
             {/* Session history */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                <h2 className="text-lg font-bold text-white/60">Run History</h2>
+                <h2 className="text-lg font-bold text-white/80">Run History</h2>
                 <div className="flex items-center gap-3">
                   {/* Filter by scenario */}
                   <select
                     value={filterScenario}
                     onChange={e => setFilterScenario(e.target.value)}
-                    className="h-8 px-3 rounded-lg border border-white/[0.06] text-[11px] text-white/50 focus:outline-none focus:border-cyan-500/30 transition-colors cursor-pointer"
+                    className="h-8 px-3 rounded-lg border border-white/[0.10] text-[11px] text-white/60 focus:outline-none focus:border-cyan-500/40 transition-colors cursor-pointer"
                     style={{ backgroundColor: '#0c0b1a' }}
                   >
                     <option value="all" style={{ backgroundColor: '#0c0b1a', color: '#ccc' }}>All Scenarios</option>
@@ -181,7 +181,7 @@ export default function DashboardPage() {
                   <select
                     value={sortBy}
                     onChange={e => setSortBy(e.target.value as SortField)}
-                    className="h-8 px-3 rounded-lg border border-white/[0.06] text-[11px] text-white/50 focus:outline-none focus:border-cyan-500/30 transition-colors cursor-pointer"
+                    className="h-8 px-3 rounded-lg border border-white/[0.10] text-[11px] text-white/60 focus:outline-none focus:border-cyan-500/40 transition-colors cursor-pointer"
                     style={{ backgroundColor: '#0c0b1a' }}
                   >
                     <option value="date" style={{ backgroundColor: '#0c0b1a', color: '#ccc' }}>Sort: Latest</option>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                   {/* Export CSV */}
                   <button
                     onClick={handleExportCSV}
-                    className="h-8 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/40 hover:text-cyan-400 hover:border-cyan-500/20 transition-all flex items-center gap-1.5"
+                    className="h-8 px-3 rounded-lg bg-white/[0.05] border border-white/[0.10] text-[11px] text-white/60 hover:text-cyan-400 hover:border-cyan-500/30 transition-all flex items-center gap-1.5"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M6 2v6M3 6l3 3 3-3M2 10h8" />
@@ -203,14 +203,14 @@ export default function DashboardPage() {
                   {/* Clear all */}
                   <button
                     onClick={handleClear}
-                    className="text-[11px] text-white/20 hover:text-red-400 transition-colors"
+                    className="text-[11px] text-white/35 hover:text-red-400 transition-colors"
                   >
                     Clear All
                   </button>
                 </div>
               </div>
 
-              <div className="text-[10px] text-white/15 mb-2">
+              <div className="text-[10px] text-white/30 mb-2">
                 Showing {sorted.length} of {sessions.length} sessions
               </div>
 
@@ -227,11 +227,11 @@ export default function DashboardPage() {
   );
 }
 
-function BigStat({ label, value, color }: { label: string; value: string | number; color: string }) {
+function BigStat({ label, value, color, accent = 'text-white' }: { label: string; value: string | number; color: string; accent?: string }) {
   return (
-    <div className={`rounded-2xl border border-white/[0.04] bg-gradient-to-br ${color} to-transparent p-5`}>
-      <div className="text-2xl font-bold font-mono text-white/80 mb-1">{value}</div>
-      <div className="text-[10px] uppercase tracking-widest text-white/25">{label}</div>
+    <div className={`rounded-2xl border border-white/[0.08] bg-gradient-to-br ${color} to-transparent p-5`}>
+      <div className={`text-2xl font-bold font-mono ${accent} mb-1`}>{value}</div>
+      <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
     </div>
   );
 }
@@ -239,8 +239,8 @@ function BigStat({ label, value, color }: { label: string; value: string | numbe
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-xs font-mono text-white/50">{value}</div>
-      <div className="text-[9px] text-white/20">{label}</div>
+      <div className="text-xs font-mono text-white/70">{value}</div>
+      <div className="text-[9px] text-white/35">{label}</div>
     </div>
   );
 }
@@ -251,56 +251,56 @@ function SessionRow({ session, onDelete }: { session: SimulationSession; onDelet
     : '0';
 
   return (
-    <div className="group flex items-center gap-4 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.03] hover:bg-white/[0.03] transition-colors">
+    <div className="group flex items-center gap-4 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.10] transition-colors">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-white/60 truncate">{session.presetName}</span>
+          <span className="text-sm font-medium text-white/80 truncate">{session.presetName}</span>
           {session.evacuationComplete && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">COMPLETE</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">COMPLETE</span>
           )}
           {session.panicModeUsed && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 font-medium">PANIC</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-medium">PANIC</span>
           )}
         </div>
-        <div className="text-[10px] text-white/20 mt-0.5">
+        <div className="text-[10px] text-white/35 mt-0.5">
           {new Date(session.startTime).toLocaleString()}
         </div>
       </div>
       <div className="flex items-center gap-5 text-xs font-mono">
         <div className="text-center">
-          <div className="text-white/50">{session.agentsExited}/{session.initialAgents}</div>
-          <div className="text-[8px] text-white/15">exited</div>
+          <div className="text-white/70">{session.agentsExited}/{session.initialAgents}</div>
+          <div className="text-[8px] text-white/30">exited</div>
         </div>
         <div className="text-center">
-          <div className="text-white/50">{evacRate}%</div>
-          <div className="text-[8px] text-white/15">rate</div>
+          <div className="text-white/70">{evacRate}%</div>
+          <div className="text-[8px] text-white/30">rate</div>
         </div>
         <div className="text-center">
-          <div className="text-white/50">{formatDuration(session.durationMs)}</div>
-          <div className="text-[8px] text-white/15">time</div>
+          <div className="text-white/70">{formatDuration(session.durationMs)}</div>
+          <div className="text-[8px] text-white/30">time</div>
         </div>
         <div className="text-center">
-          <div className={`${session.averageFps < 30 ? 'text-red-400' : 'text-white/50'}`}>
+          <div className={`${session.averageFps < 30 ? 'text-red-400' : 'text-white/70'}`}>
             {session.averageFps.toFixed(0)}
           </div>
-          <div className="text-[8px] text-white/15">fps</div>
+          <div className="text-[8px] text-white/30">fps</div>
         </div>
         {/* Stress bar */}
         <div className="w-16">
-          <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+          <div className="h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
             <div
               className={`h-full rounded-full ${
-                session.peakStress > 0.6 ? 'bg-red-500/50' : session.peakStress > 0.3 ? 'bg-orange-500/50' : 'bg-cyan-500/50'
+                session.peakStress > 0.6 ? 'bg-red-500/80' : session.peakStress > 0.3 ? 'bg-orange-500/80' : 'bg-cyan-500/80'
               }`}
               style={{ width: `${session.peakStress * 100}%` }}
             />
           </div>
-          <div className="text-[8px] text-white/15 text-center mt-0.5">stress</div>
+          <div className="text-[8px] text-white/30 text-center mt-0.5">stress</div>
         </div>
         {/* Delete button */}
         <button
           onClick={() => onDelete(session.id)}
-          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
+          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/15 transition-all"
           title="Delete session"
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
