@@ -1,7 +1,21 @@
+import { PageLayout } from '../../components/layout/PageLayout';
+import { HeroSection } from './HeroSection';
+import { FeaturesSection } from './FeaturesSection';
+import { MetricsTicker } from './MetricsTicker';
+import { MiniSimSection } from './MiniSimSection';
+import { TechOverview } from './TechOverview';
+import { Footer } from './Footer';
+import '../../styles/animations.css';
+
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-surface-950 flex items-center justify-center">
-      <h1 className="text-4xl font-bold text-gradient">CrowdFlow</h1>
-    </div>
+    <PageLayout>
+      <HeroSection />
+      <FeaturesSection />
+      <MetricsTicker />
+      <MiniSimSection />
+      <TechOverview />
+      <Footer />
+    </PageLayout>
   );
 }
