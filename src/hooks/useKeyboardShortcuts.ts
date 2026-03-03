@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import type { InteractionMode } from '../engine/core/types';
-import type { SimulationController } from '../bridge/SimulationController';
 
 interface ShortcutHandlers {
   togglePlay: () => void;
   setMode: (mode: InteractionMode) => void;
+  currentMode: InteractionMode;
   stepForward: () => void;
   resetSim: () => void;
 }
@@ -17,6 +17,10 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
       // Don't trigger tool shortcuts when Ctrl/Meta is held (reserved for copy/paste)
       if (e.ctrlKey || e.metaKey) return;
 
+      const toggle = (m: Exclude<InteractionMode, null>) => {
+        handlers.setMode(handlers.currentMode === m ? null : m);
+      };
+
       switch (e.key) {
         case ' ':
           e.preventDefault();
@@ -24,40 +28,38 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
           break;
         case 'v':
         case 'V':
-          handlers.setMode('select');
+          toggle('select');
           break;
         case 'a':
         case 'A':
-          handlers.setMode('addAgent');
+          toggle('addAgent');
           break;
         case 'w':
         case 'W':
-          handlers.setMode('addWall');
+          toggle('addWall');
           break;
         case 'e':
         case 'E':
-          handlers.setMode('addExit');
+          toggle('addExit');
           break;
         case 'h':
         case 'H':
-          handlers.setMode('addHazard');
+          toggle('addHazard');
           break;
         case 'g':
         case 'G':
-          handlers.setMode('addAttractor');
+          toggle('addAttractor');
           break;
         case 'x':
         case 'X':
-          handlers.setMode('erase');
+          toggle('erase');
           break;
         case '.':
           handlers.stepForward();
           break;
         case 'r':
         case 'R':
-          if (!e.ctrlKey && !e.metaKey) {
-            handlers.resetSim();
-          }
+          handlers.resetSim();
           break;
       }
     };

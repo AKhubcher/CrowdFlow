@@ -5,7 +5,9 @@ interface ToolSelectorProps {
   onModeChange: (mode: InteractionMode) => void;
 }
 
-const tools: { mode: InteractionMode; label: string; shortcut: string; color: string }[] = [
+type NonNullMode = Exclude<InteractionMode, null>;
+
+const tools: { mode: NonNullMode; label: string; shortcut: string; color: string }[] = [
   { mode: 'select', label: 'Select', shortcut: 'V', color: 'white' },
   { mode: 'addAgent', label: 'Agent', shortcut: 'A', color: 'cyan' },
   { mode: 'addWall', label: 'Wall', shortcut: 'W', color: 'slate' },
@@ -77,7 +79,7 @@ export function ToolSelector({ mode, onModeChange }: ToolSelectorProps) {
           return (
             <button
               key={tool.mode}
-              onClick={() => onModeChange(tool.mode)}
+              onClick={() => onModeChange(mode === tool.mode ? null : tool.mode)}
               className={`group relative h-11 rounded-lg text-xs font-medium transition-all flex flex-col items-center justify-center gap-1 ${
                 active
                   ? `${activeColors[tool.color]} ring-1`

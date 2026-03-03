@@ -292,8 +292,8 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     const worldPos = getWorldPos(e);
 
-    // Middle mouse or right-click for panning
-    if (e.button === 1 || e.button === 2) {
+    // Middle mouse, right-click, or no tool: pan
+    if (e.button === 1 || e.button === 2 || (e.button === 0 && mode === null)) {
       isPanning.current = true;
       lastScreenPos.current = { x: e.clientX, y: e.clientY };
       return;
@@ -339,7 +339,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
     }
 
     // Update overlay cursor
-    controller.renderer.overlayLayer.setCursor(worldPos, mode);
+    controller.renderer.overlayLayer.setCursor(mode ? worldPos : null, mode ?? '');
 
     if (dragging.current) {
       if (mode === 'addWall' || mode === 'addExit') {
@@ -412,7 +412,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 cursor-crosshair"
+      className={`absolute inset-0 ${mode ? 'cursor-crosshair' : 'cursor-default'}`}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}

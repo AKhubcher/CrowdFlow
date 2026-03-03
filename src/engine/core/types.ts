@@ -90,6 +90,7 @@ export interface SimulationStats {
 }
 
 export type InteractionMode =
+  | null
   | 'select'
   | 'addAgent'
   | 'addWall'

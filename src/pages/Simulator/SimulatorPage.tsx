@@ -60,7 +60,7 @@ export default function SimulatorPage() {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [mode, setMode] = useState<InteractionMode>('addAgent');
+  const [mode, setMode] = useState<InteractionMode>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState(initialPreset.id);
   const [overlays, setOverlays] = useState<Set<VisualizationOverlay>>(new Set());
@@ -332,15 +332,16 @@ export default function SimulatorPage() {
   const shortcutHandlers = useMemo(() => ({
     togglePlay,
     setMode,
+    currentMode: mode,
     stepForward,
     resetSim: handleReset,
-  }), [togglePlay, stepForward, handleReset]);
+  }), [togglePlay, mode, stepForward, handleReset]);
 
   useKeyboardShortcuts(shortcutHandlers);
 
   if (!controller) return null;
 
-  const modeLabels: Record<InteractionMode, string> = {
+  const modeLabels: Record<string, string> = {
     select: 'Select',
     addAgent: 'Place Agents',
     addWall: 'Draw Wall',
@@ -386,11 +387,13 @@ export default function SimulatorPage() {
         <div className="flex-1 relative">
           <SimCanvas controller={controller} mode={mode} />
           {/* Mode indicator */}
+          {mode && (
           <div className="absolute bottom-3 left-3 bg-surface-950/60 backdrop-blur-xl rounded-lg px-3 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[10px] uppercase tracking-widest text-white/25 font-medium">
               {modeLabels[mode]}
             </span>
           </div>
+          )}
           {/* Keyboard hints */}
           <div className="absolute bottom-3 right-3 bg-surface-950/40 backdrop-blur-xl rounded-lg px-2.5 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[9px] text-white/15 font-mono">
