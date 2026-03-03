@@ -236,7 +236,7 @@ export function HeroSection() {
       </div>
 
       {/* Scroll indicator */}
-      <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-all duration-1000 delay-700 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-all duration-1000 delay-700 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
         <div className="w-5 h-9 rounded-full border border-white/10 flex items-start justify-center p-1.5">
           <div className="w-1 h-2 rounded-full bg-white/20 animate-bounce" />
         </div>

@@ -68,6 +68,17 @@ export default function SimulatorPage() {
   const [snapshotCount, setSnapshotCount] = useState(0);
   const [snapshotIndex, setSnapshotIndex] = useState(0);
 
+  // Apply preset from navigation state (e.g. from Scenarios page)
+  const appliedPresetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (locationPresetId && controller && locationPresetId !== appliedPresetRef.current) {
+      appliedPresetRef.current = locationPresetId;
+      const preset = getInitialPreset(locationPresetId);
+      setActivePreset(preset.id);
+      reset(buildWorldFromPreset(preset));
+    }
+  }, [locationPresetId, controller, reset]);
+
   // Session tracking for dashboard
   const sessionStart = useRef(0);
   const initialAgentCount = useRef(0);
@@ -296,24 +307,29 @@ export default function SimulatorPage() {
 
   return (
     <div className="h-screen flex flex-col bg-surface-950">
-      {/* Top bar */}
-      <div className="h-11 flex items-center px-4 border-b border-white/[0.04] bg-surface-950/90 backdrop-blur-xl flex-shrink-0">
-        <Link to="/" className="text-sm font-bold text-gradient mr-3 hover:opacity-80 transition-opacity">CrowdFlow</Link>
-        <div className="w-px h-4 bg-white/[0.06] mr-3" />
-        <div className="flex items-center gap-1.5 text-[11px]">
-          <div className={`w-1.5 h-1.5 rounded-full transition-colors ${isPlaying ? 'bg-emerald-400' : 'bg-white/20'}`} />
-          <span className={isPlaying ? 'text-emerald-400/70' : 'text-white/30'}>{isPlaying ? 'Running' : 'Paused'}</span>
-        </div>
-        <div className="ml-auto flex items-center gap-5">
-          <Link to="/dashboard" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
-            Dashboard
-          </Link>
-          <Link to="/scenarios" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
-            Scenarios
-          </Link>
-          <Link to="/how-it-works" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
-            How It Works
-          </Link>
+      {/* Top bar + analytics */}
+      <div className="flex-shrink-0 border-b border-white/[0.04] bg-surface-950/90 backdrop-blur-xl">
+        <div className="h-11 flex items-center px-4">
+          <Link to="/" className="text-sm font-bold text-gradient mr-3 hover:opacity-80 transition-opacity">CrowdFlow</Link>
+          <div className="w-px h-4 bg-white/[0.06] mr-3" />
+          <div className="flex items-center gap-1.5 text-[11px]">
+            <div className={`w-1.5 h-1.5 rounded-full transition-colors ${isPlaying ? 'bg-emerald-400' : 'bg-white/20'}`} />
+            <span className={isPlaying ? 'text-emerald-400/70' : 'text-white/30'}>{isPlaying ? 'Running' : 'Paused'}</span>
+          </div>
+          <div className="mx-4 flex-1">
+            <AnalyticsOverlay stats={stats} isPlaying={isPlaying} />
+          </div>
+          <div className="flex items-center gap-5">
+            <Link to="/dashboard" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
+              Dashboard
+            </Link>
+            <Link to="/scenarios" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
+              Scenarios
+            </Link>
+            <Link to="/how-it-works" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
+              How It Works
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -321,7 +337,6 @@ export default function SimulatorPage() {
       <div className="flex-1 flex min-h-0">
         <div className="flex-1 relative">
           <SimCanvas controller={controller} mode={mode} />
-          <AnalyticsOverlay stats={stats} isPlaying={isPlaying} />
           {/* Mode indicator */}
           <div className="absolute bottom-3 left-3 bg-surface-950/60 backdrop-blur-xl rounded-lg px-3 py-1.5 border border-white/[0.04] pointer-events-none">
             <span className="text-[10px] uppercase tracking-widest text-white/25 font-medium">

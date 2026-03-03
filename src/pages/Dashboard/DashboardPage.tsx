@@ -168,24 +168,26 @@ export default function DashboardPage() {
                   <select
                     value={filterScenario}
                     onChange={e => setFilterScenario(e.target.value)}
-                    className="h-8 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/50 focus:outline-none focus:border-cyan-500/30 transition-colors cursor-pointer"
+                    className="h-8 px-3 rounded-lg border border-white/[0.06] text-[11px] text-white/50 focus:outline-none focus:border-cyan-500/30 transition-colors cursor-pointer"
+                    style={{ backgroundColor: '#0c0b1a' }}
                   >
-                    <option value="all">All Scenarios</option>
+                    <option value="all" style={{ backgroundColor: '#0c0b1a', color: '#ccc' }}>All Scenarios</option>
                     {scenarioNames.map(name => (
-                      <option key={name} value={name}>{name}</option>
+                      <option key={name} value={name} style={{ backgroundColor: '#0c0b1a', color: '#ccc' }}>{name}</option>
                     ))}
                   </select>
                   {/* Sort */}
                   <select
                     value={sortBy}
                     onChange={e => setSortBy(e.target.value as SortField)}
-                    className="h-8 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/50 focus:outline-none focus:border-cyan-500/30 transition-colors cursor-pointer"
+                    className="h-8 px-3 rounded-lg border border-white/[0.06] text-[11px] text-white/50 focus:outline-none focus:border-cyan-500/30 transition-colors cursor-pointer"
+                    style={{ backgroundColor: '#0c0b1a' }}
                   >
-                    <option value="date">Sort: Latest</option>
-                    <option value="evacRate">Sort: Evac Rate</option>
-                    <option value="duration">Sort: Duration</option>
-                    <option value="fps">Sort: FPS</option>
-                    <option value="stress">Sort: Stress</option>
+                    <option value="date" style={{ backgroundColor: '#0c0b1a', color: '#ccc' }}>Sort: Latest</option>
+                    <option value="evacRate" style={{ backgroundColor: '#0c0b1a', color: '#ccc' }}>Sort: Evac Rate</option>
+                    <option value="duration" style={{ backgroundColor: '#0c0b1a', color: '#ccc' }}>Sort: Duration</option>
+                    <option value="fps" style={{ backgroundColor: '#0c0b1a', color: '#ccc' }}>Sort: FPS</option>
+                    <option value="stress" style={{ backgroundColor: '#0c0b1a', color: '#ccc' }}>Sort: Stress</option>
                   </select>
                   {/* Export CSV */}
                   <button

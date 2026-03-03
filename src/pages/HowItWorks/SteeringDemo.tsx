@@ -160,7 +160,7 @@ export function SteeringDemo() {
                 : 'bg-white/5 text-white/40 hover:bg-white/10'
             }`}
           >
-            {key.replace(/([A-Z])/g, ' $1').trim()}
+            {key.replace(/([A-Z])/g, ' $1').trim().replace(/^./, c => c.toUpperCase())}
           </button>
         ))}
       </div>

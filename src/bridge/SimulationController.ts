@@ -97,6 +97,9 @@ export class SimulationController {
     this.stop();
     this.engine = new Engine(world ?? createWorld());
     this.accumulator = 0;
+    // Re-center camera on new world
+    this.renderer.camera.setPosition(this.engine.world.width / 2, this.engine.world.height / 2);
+    this.renderer.camera.setZoom(1);
     this.renderer.environmentLayer.forceRedraw();
     this.renderer.render(this.engine.world, this.engine.flowField);
   }
