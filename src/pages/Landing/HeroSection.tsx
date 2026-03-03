@@ -36,11 +36,25 @@ export function HeroSection() {
     window.addEventListener('resize', resize);
 
     const world = createWorld(w, h);
-    addExit(world, w - 2, h * 0.2, w - 2, h * 0.8);
-    addExit(world, 2, h * 0.2, 2, h * 0.8);
-    addExit(world, w * 0.3, h - 2, w * 0.7, h - 2);
+    // Exits all around the edges — agents flow outward in every direction
+    // Right edge — multiple segments
+    addExit(world, w - 2, h * 0.05, w - 2, h * 0.25);
+    addExit(world, w - 2, h * 0.35, w - 2, h * 0.65);
+    addExit(world, w - 2, h * 0.75, w - 2, h * 0.95);
+    // Left edge
+    addExit(world, 2, h * 0.05, 2, h * 0.25);
+    addExit(world, 2, h * 0.35, 2, h * 0.65);
+    addExit(world, 2, h * 0.75, 2, h * 0.95);
+    // Top edge
+    addExit(world, w * 0.05, 2, w * 0.3, 2);
+    addExit(world, w * 0.4, 2, w * 0.6, 2);
+    addExit(world, w * 0.7, 2, w * 0.95, 2);
+    // Bottom edge
+    addExit(world, w * 0.05, h - 2, w * 0.3, h - 2);
+    addExit(world, w * 0.4, h - 2, w * 0.6, h - 2);
+    addExit(world, w * 0.7, h - 2, w * 0.95, h - 2);
 
-    const agentCount = Math.min(300, Math.floor((w * h) / 3000));
+    const agentCount = Math.min(400, Math.floor((w * h) / 2500));
     for (let i = 0; i < agentCount; i++) {
       world.agents.push(createAgent(
         50 + Math.random() * (w - 100),
@@ -67,16 +81,16 @@ export function HeroSection() {
       rafId = requestAnimationFrame(render);
       frame++;
 
-      // Mouse repulsion — push agents away from cursor
+      // Mouse repulsion — push agents away from cursor with larger radius
       const mx = mouseRef.current.x;
       const my = mouseRef.current.y;
       for (const agent of world.agents) {
         const dx = agent.position.x - mx;
         const dy = agent.position.y - my;
         const distSq = dx * dx + dy * dy;
-        if (distSq < 10000 && distSq > 1) {
+        if (distSq < 22500 && distSq > 1) { // 150px radius
           const dist = Math.sqrt(distSq);
-          const force = (1 - dist / 100) * 0.8;
+          const force = (1 - dist / 150) * 1.2;
           agent.velocity.x += (dx / dist) * force;
           agent.velocity.y += (dy / dist) * force;
         }
@@ -133,13 +147,19 @@ export function HeroSection() {
       ctx.globalAlpha = 1;
       ctx.shadowBlur = 0;
 
-      // Respawn
+      // Respawn from all edges + center clusters
       while (world.agents.length < agentCount) {
         const edge = Math.random();
         let ax: number, ay: number;
-        if (edge < 0.33) { ax = 10; ay = Math.random() * h; }
-        else if (edge < 0.66) { ax = w - 10; ay = Math.random() * h; }
-        else { ax = Math.random() * w; ay = 10; }
+        if (edge < 0.2) { ax = 10; ay = Math.random() * h; }           // left
+        else if (edge < 0.4) { ax = w - 10; ay = Math.random() * h; }  // right
+        else if (edge < 0.55) { ax = Math.random() * w; ay = 10; }     // top
+        else if (edge < 0.7) { ax = Math.random() * w; ay = h - 10; }  // bottom
+        else {
+          // Random interior spawn for constant density
+          ax = 100 + Math.random() * (w - 200);
+          ay = 100 + Math.random() * (h - 200);
+        }
         world.agents.push(createAgent(ax, ay));
       }
     };

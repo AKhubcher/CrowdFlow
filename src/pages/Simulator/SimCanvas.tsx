@@ -205,7 +205,7 @@ export function SimCanvas({ controller, mode }: SimCanvasProps) {
 
   return (
     <div
-      className="flex-1 cursor-crosshair"
+      className="absolute inset-0 cursor-crosshair"
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
