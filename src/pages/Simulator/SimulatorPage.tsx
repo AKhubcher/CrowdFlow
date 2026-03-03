@@ -7,6 +7,7 @@ import { useSimulation } from '../../bridge/useSimulation';
 import { useSimulationStats } from '../../bridge/useSimulationStats';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { SnapshotManager } from '../../engine/snapshot/SnapshotManager';
+import { SimulationSession, loadSessions, saveSessions } from '../../engine/core/SessionTracker';
 import { presets, roomEvacuation } from '../../presets';
 import { ControlPanel } from './ControlPanel/ControlPanel';
 import { SimCanvas } from './SimCanvas';
@@ -50,6 +51,59 @@ export default function SimulatorPage() {
   const [snapshotCount, setSnapshotCount] = useState(0);
   const [snapshotIndex, setSnapshotIndex] = useState(0);
 
+  // Session tracking for dashboard
+  const sessionStart = useRef(0);
+  const initialAgentCount = useRef(0);
+  const peakStress = useRef(0);
+  const stressSum = useRef(0);
+  const stressSamples = useRef(0);
+  const fpsSum = useRef(0);
+  const fpsSamples = useRef(0);
+
+  const saveCurrentSession = useCallback(() => {
+    if (!controller || sessionStart.current === 0) return;
+    const now = Date.now();
+    const world = controller.getWorld();
+    const sessions = loadSessions();
+    const preset = presets.find(p => p.id === activePreset);
+    const session: SimulationSession = {
+      id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
+      presetName: preset?.name || activePreset,
+      presetId: activePreset,
+      startTime: sessionStart.current,
+      endTime: now,
+      durationMs: now - sessionStart.current,
+      initialAgents: initialAgentCount.current,
+      agentsExited: stats.exitedCount,
+      agentsRemaining: world.agents.length,
+      peakStress: peakStress.current,
+      averageStress: stressSamples.current > 0 ? stressSum.current / stressSamples.current : 0,
+      averageFps: fpsSamples.current > 0 ? fpsSum.current / fpsSamples.current : 0,
+      totalTicks: world.tick,
+      panicModeUsed: panicMode,
+      evacuationComplete: world.agents.length === 0 && stats.exitedCount > 0,
+    };
+    // Only save if session lasted > 2 seconds and had agents
+    if (session.durationMs > 2000 && session.initialAgents > 0) {
+      sessions.push(session);
+      saveSessions(sessions);
+    }
+    sessionStart.current = 0;
+  }, [controller, activePreset, stats, panicMode]);
+
+  // Track peak stress and FPS during playback
+  useEffect(() => {
+    if (!isPlaying) return;
+    const interval = setInterval(() => {
+      if (stats.averageStress > peakStress.current) peakStress.current = stats.averageStress;
+      stressSum.current += stats.averageStress;
+      stressSamples.current++;
+      fpsSum.current += stats.fps;
+      fpsSamples.current++;
+    }, 500);
+    return () => clearInterval(interval);
+  }, [isPlaying, stats]);
+
   // Snapshot capture interval
   useEffect(() => {
     if (!isPlaying || !controller) return;
@@ -65,11 +119,22 @@ export default function SimulatorPage() {
     if (!controller) return;
     if (isPlaying) {
       controller.stop();
+      saveCurrentSession();
     } else {
+      // Start new session
+      if (sessionStart.current === 0) {
+        sessionStart.current = Date.now();
+        initialAgentCount.current = controller.getWorld().agents.length;
+        peakStress.current = 0;
+        stressSum.current = 0;
+        stressSamples.current = 0;
+        fpsSum.current = 0;
+        fpsSamples.current = 0;
+      }
       controller.start();
     }
     setIsPlaying(!isPlaying);
-  }, [controller, isPlaying]);
+  }, [controller, isPlaying, saveCurrentSession]);
 
   const stepForward = useCallback(() => {
     if (!controller || isPlaying) return;
@@ -79,6 +144,7 @@ export default function SimulatorPage() {
   const handleReset = useCallback(() => {
     if (!controller) return;
     controller.stop();
+    saveCurrentSession();
     setIsPlaying(false);
     setPanicMode(false);
     const preset = presets.find(p => p.id === activePreset);
@@ -88,7 +154,8 @@ export default function SimulatorPage() {
     snapshotMgr.current.clear();
     setSnapshotCount(0);
     setSnapshotIndex(0);
-  }, [controller, reset, activePreset]);
+    sessionStart.current = 0;
+  }, [controller, reset, activePreset, saveCurrentSession]);
 
   const handleSpeedChange = useCallback((s: number) => {
     setSpeed(s);
@@ -98,6 +165,7 @@ export default function SimulatorPage() {
   const handlePresetSelect = useCallback((preset: PresetScenario) => {
     if (!controller) return;
     controller.stop();
+    saveCurrentSession();
     setIsPlaying(false);
     setPanicMode(false);
     setActivePreset(preset.id);
@@ -105,7 +173,8 @@ export default function SimulatorPage() {
     snapshotMgr.current.clear();
     setSnapshotCount(0);
     setSnapshotIndex(0);
-  }, [controller, reset]);
+    sessionStart.current = 0;
+  }, [controller, reset, saveCurrentSession]);
 
   const handleToggleOverlay = useCallback((overlay: VisualizationOverlay) => {
     setOverlays(prev => {
@@ -191,11 +260,14 @@ export default function SimulatorPage() {
           <span className={isPlaying ? 'text-emerald-400/70' : 'text-white/30'}>{isPlaying ? 'Running' : 'Paused'}</span>
         </div>
         <div className="ml-auto flex items-center gap-5">
+          <Link to="/dashboard" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
+            Dashboard
+          </Link>
+          <Link to="/scenarios" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
+            Scenarios
+          </Link>
           <Link to="/how-it-works" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
             How It Works
-          </Link>
-          <Link to="/about" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
-            About
           </Link>
         </div>
       </div>

@@ -14,6 +14,8 @@ export function Footer() {
           <div className="flex items-center gap-8">
             {[
               { to: '/simulator', label: 'Simulator' },
+              { to: '/scenarios', label: 'Scenarios' },
+              { to: '/dashboard', label: 'Dashboard' },
               { to: '/how-it-works', label: 'How It Works' },
               { to: '/about', label: 'About' },
             ].map(link => (

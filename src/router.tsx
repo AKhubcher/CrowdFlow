@@ -5,6 +5,8 @@ const LandingPage = lazy(() => import('./pages/Landing/LandingPage'));
 const SimulatorPage = lazy(() => import('./pages/Simulator/SimulatorPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorks/HowItWorksPage'));
 const AboutPage = lazy(() => import('./pages/About/AboutPage'));
+const DashboardPage = lazy(() => import('./pages/Dashboard/DashboardPage'));
+const ScenariosPage = lazy(() => import('./pages/Scenarios/ScenariosPage'));
 
 function LoadingFallback() {
   return (
@@ -20,6 +22,8 @@ export function AppRoutes() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/simulator" element={<SimulatorPage />} />
+        <Route path="/scenarios" element={<ScenariosPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/about" element={<AboutPage />} />
       </Routes>
